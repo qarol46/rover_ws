@@ -6,6 +6,7 @@ find_package(hardware_interface REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(pluginlib REQUIRED)
 
+# Основная библиотека
 add_library(ros2_control_wheeled_robot_hardware SHARED
   src/wheeled_robot_hardware.cpp
   src/udp_wheeled_robot.cpp
@@ -23,10 +24,25 @@ ament_target_dependencies(ros2_control_wheeled_robot_hardware
   pluginlib
 )
 
-install(TARGETS ros2_control_wheeled_robot_hardware
+# Тестовая нода для проверки UDP
+add_executable(udp_test_node 
+  src/udp_test_node.cpp
+)
+
+target_link_libraries(udp_test_node
+  ros2_control_wheeled_robot_hardware
+)
+
+ament_target_dependencies(udp_test_node
+  rclcpp
+)
+
+install(TARGETS 
+  ros2_control_wheeled_robot_hardware
+  udp_test_node
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 
 install(DIRECTORY include/
