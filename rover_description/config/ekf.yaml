@@ -1,0 +1,34 @@
+ekf_filter_node:
+  ros__parameters:
+    publish_tf: true
+    frequency: 50.0
+    # Задержка перед очисткой буфера (сек)
+    tf_timeout: 0.1  
+    # Игнорировать небольшие скачки времени
+    tf_time_jump_threshold: 0.5  
+    #sensor_timeout: 0.1
+    two_d_mode: true       # Для наземных роботов (2D)
+    
+    # Источник 1: Колёсная одометрия
+    odom0: diff_cont/odom     # Топик одометрии
+    odom0_config: [true,   true,   false,  # X, Y позиция (Z отключён)
+                   false,  false,  false,   # Не учитываем yaw, т.к. есть проскальзывание колёс
+                   true,   false,  false,  # Линейная скорость (только X)
+                   false,  false,  true]   # Угловая скорость (только yaw)
+
+    # Источник 2: IMU
+    imu0: /imu        # Топик IMU
+    imu0_config: [false,   false,  false,  # Позиция (не используется)
+                  true,    true,   true,   # Ориентация (roll, pitch, yaw)
+                  false,   false,  false,  # Линейная скорость
+                  true,    true,   true,   # Угловая скорость
+                  false,   false,  false]  # Линейное ускорение
+
+    # Приоритеты источников
+    #odom0_differential: false  # Одометрия не дифференциальная
+    #imu0_differential: false   # IMU не дифференциальный
+
+    # Фреймы
+    world_frame: odom           # Глобальный фрейм
+    odom_frame: odom            # Фрейм одометрии
+    base_link_frame: base_link  # Базовый фрейм робота

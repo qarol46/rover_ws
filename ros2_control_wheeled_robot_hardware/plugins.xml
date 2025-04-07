@@ -1,0 +1,9 @@
+<library path="ros2_control_wheeled_robot_hardware">
+  <class name="ros2_control_wheeled_robot_hardware/WheeledRobotHardware"
+         type="ros2_control_wheeled_robot_hardware::WheeledRobotHardware"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+      ROS2 Control hardware interface for a 6-wheeled differential drive robot.
+    </description>
+  </class>
+</library>

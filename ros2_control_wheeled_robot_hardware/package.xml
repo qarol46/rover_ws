@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>ros2_control_wheeled_robot_hardware</name>
+  <version>0.0.0</version>
+  <description>Hardware interface for a 6-wheeled differential drive robot using UDP.</description>
+  <maintainer email="your.email@example.com">Your Name</maintainer>
+  <license>Apache License 2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- Зависимости для сборки -->
+  <depend>hardware_interface</depend>
+  <depend>rclcpp</depend>
+  <depend>pluginlib</depend>
+
+  <!-- Экспорт зависимостей -->
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

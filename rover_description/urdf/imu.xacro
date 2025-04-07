@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Xsense -->
+  <xacro:macro name="xsens_link_geometry">
+    <geometry>
+      <box size="0.001 0.001 0.001"/>
+    </geometry>
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </xacro:macro>
+
+  <link name="xsens_link">
+    <visual>
+      <xacro:xsens_link_geometry />
+      <material name="grey">
+        <color rgba="0.5 0.5 0.5 1"/>
+      </material>
+    </visual>
+    <collision>
+      <xacro:xsens_link_geometry />
+    </collision>
+    <xacro:box_inertia
+     b_mass="0.1"
+     b_length="0.1"
+     b_width="0.1"
+     b_height="0.1"/>
+  </link>
+  <gazebo reference="xsens_link">
+    <material>Gazebo/RustySteel</material>
+  </gazebo>
+
+  <joint name="xsens_joint" type="fixed">
+    <parent link="ctrlbox_link"/>
+    <child link="xsens_link"/>
+    <origin xyz="0 0.08 ${0.01-ctrlbox_link_height/2}" rpy="0 0 0"/>
+    <!--origin xyz="0 0 0" rpy="0 0 ${pi/2}"/-->
+  </joint>
+
+  <!-- Xsense gazebo model -->
+  <gazebo reference="xsens_link">
+    <gravity>true</gravity>
+    <sensor name="imu_sensor" type="imu">
+      <pose relative_to='xsens_link'>0 0 0 0 0 0</pose>
+      <always_on>true</always_on>
+      <update_rate>100</update_rate>
+      <!--reduced version of the plugin for ros2 without params-->
+      <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
+        <ros>
+          <!-- publish to /imu/data -->
+          <!--namespace>/imu</namespace-->
+          <remapping>~/out:=imu</remapping>
+        </ros>
+        <!--topicName>/imu/data_raw</topicName>
+        <bodyName>xsens_link</bodyName>
+        <updateRateHZ>100.0</updateRateHZ>
+        <gaussianNoise>2.27e-8</gaussianNoise>
+        <xyzOffset>0 0 0</xyzOffset>
+        <rpyOffset>0 0 0</rpyOffset>
+        <frameName>xsens_link</frameName-->
+      </plugin>
+    </sensor>
+  </gazebo>
+  
+</robot>

@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="trk211">
+  <ros2_control name="WheeledRobotSystem" type="system">
+    <hardware>
+      <plugin>ros2_control_wheeled_robot_hardware/WheeledRobotHardware</plugin>
+      
+      <!-- Параметры UDP-соединения -->
+      <param name="udp_ip">192.168.1.100</param>  <!-- IP робота -->
+      <param name="udp_port">8888</param>         <!-- Порт робота -->
+      <param name="local_port">8889</param>       <!-- Локальный порт -->
+    
+      <!-- Параметры колес -->
+      <param name="wheel_separation">0.8</param>  <!-- Расстояние между колесами (м) -->
+      <param name="wheel_radius">0.19</param>    <!-- Радиус колес (м) -->
+    </hardware>
+
+    <!-- Конфигурация суставов -->
+    <joint name="base_to_l_f_wheel">
+      <command_interface name="velocity"/>
+      <state_interface name="velocity"/>
+      <state_interface name="position"/>
+    </joint>
+    <joint name="base_to_l_m_wheel">
+      <command_interface name="velocity"/>
+      <state_interface name="velocity"/>
+      <state_interface name="position"/>
+    </joint>
+    <joint name="base_to_l_r_wheel">
+      <command_interface name="velocity"/>
+      <state_interface name="velocity"/>
+      <state_interface name="position"/>
+    </joint>
+    <joint name="base_to_r_f_wheel">
+      <command_interface name="velocity"/>
+      <state_interface name="velocity"/>
+      <state_interface name="position"/>
+    </joint>
+    <joint name="base_to_r_m_wheel">
+      <command_interface name="velocity"/>
+      <state_interface name="velocity"/>
+      <state_interface name="position"/>
+    </joint>
+    <joint name="base_to_r_r_wheel">
+      <command_interface name="velocity"/>
+      <state_interface name="velocity"/>
+      <state_interface name="position"/>
+    </joint>
+  </ros2_control>
+</robot>

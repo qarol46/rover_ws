@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="trk211">
+
+  <!-- Включение файлов -->
+  <xacro:include filename="chassis.xacro"/>
+  <xacro:include filename="ros2_control.xacro"/>
+  <xacro:include filename="imu.xacro"/>
+  <!--
+  <xacro:include filename="$(find velodyne_description)/urdf/VLP-16.urdf.xacro"/>
+  <xacro:VLP-16 parent="visionbox_link" name="velodyne"
+          topic="/velodyne_points"
+          hz="10" samples="400" gpu="true" min_range="0.1" min_angle="-${pi/2}" max_angle="${pi/2}">
+    <origin xyz="0 0 ${visionbox_link_height/2}" rpy="0 0 0" />
+  </xacro:VLP-16>
+  -->
+  <!--
+  <xacro:include filename="$(find realsense2_description)/urdf/_d415.urdf.xacro"/>
+  
+  <xacro:include filename="depth_camera.xacro"/>
+  <xacro:include filename="gazebo_control.xacro"/>-->
+  
+  <!--xacro:include filename="camera.xacro"/-->
+  
+</robot>
