@@ -175,21 +175,16 @@ hardware_interface::return_type WheeledRobotHardware::read(
   double wheel_velocities[6] = {0.0};
   double wheel_positions[6] = {0.0};
 
-  // Получение данных от робота
   if (!udp_socket_->GetWheelStates(wheel_velocities, wheel_positions)) {
-    RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 1000, 
-                         "Failed to receive wheel states");
-    return hardware_interface::return_type::ERROR;
+      RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 1000, 
+                          "Failed to receive wheel states");
+      // Используем последние известные значения
+      return hardware_interface::return_type::OK;
   }
 
-  // Обновление состояний
   for (size_t i = 0; i < hw_velocities_.size(); ++i) {
-    hw_velocities_[i] = wheel_velocities[i];
-    
-    // Если позиции не приходят от устройства, интегрируем скорости
-    hw_positions_[i] = (wheel_positions[i] != 0.0) 
-                      ? wheel_positions[i] 
-                      : hw_positions_[i] + hw_velocities_[i] * period.seconds();
+      hw_velocities_[i] = wheel_velocities[i];
+      hw_positions_[i] = wheel_positions[i];
   }
 
   return hardware_interface::return_type::OK;
@@ -198,17 +193,20 @@ hardware_interface::return_type WheeledRobotHardware::read(
 hardware_interface::return_type WheeledRobotHardware::write(
   const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
+  // Рассчитываем средние скорости для левых и правых колес
   double left_avg = (hw_commands_[0] + hw_commands_[1] + hw_commands_[2]) / 3.0;
   double right_avg = (hw_commands_[3] + hw_commands_[4] + hw_commands_[5]) / 3.0;
 
+  // Преобразуем в линейную и угловую скорости
   double velocity_command[2] = {
-    (left_avg + right_avg) * wheel_radius_ / 2.0,  // linear
-    (right_avg - left_avg) * wheel_radius_ / wheel_separation_  // angular
+      (left_avg + right_avg) * wheel_radius_ / 2.0,  // linear (m/s)
+      (right_avg - left_avg) * wheel_radius_ / wheel_separation_  // angular (rad/s)
   };
 
   if (!udp_socket_->SendWheelSpeeds(velocity_command)) {
-    RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 1000, "Failed to send wheel speeds");
-    return hardware_interface::return_type::ERROR;
+      RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 1000, 
+                          "Failed to send wheel speeds");
+      return hardware_interface::return_type::ERROR;
   }
 
   return hardware_interface::return_type::OK;

@@ -18,6 +18,17 @@ def generate_launch_description():
         )]), launch_arguments={'use_sim_time': 'false', 'use_ros2_control': 'true'}.items()
     )
 
+    robot_description = Command(['ros2 param get --hide-type /robot_state_publisher robot_description'])
+    
+    controller_params_file = os.path.join(get_package_share_directory(package_name),'config','controllers.yaml')
+
+    # Запуск Controller Manager
+    controller_manager = Node(
+        package="controller_manager",
+        executable="ros2_control_node",
+        parameters=[{'robot_description': robot_description},
+                    controller_params_file],
+    )
     #joystick = IncludeLaunchDescription(
     #            PythonLaunchDescriptionSource([os.path.join(
     #                get_package_share_directory(package_name),'launch','joystick.launch.py'
@@ -39,18 +50,6 @@ def generate_launch_description():
             parameters=[twist_mux_params, {'use_sim_time': True}],
             remappings=[('/cmd_vel_out','/diff_cont/cmd_vel_unstamped')]
         )
-
-    robot_description = Command(['ros2 param get --hide-type /robot_state_publisher robot_description'])
-    
-    controller_params_file = os.path.join(get_package_share_directory(package_name),'config','controllers.yaml')
-
-    # Запуск Controller Manager
-    controller_manager = Node(
-        package="controller_manager",
-        executable="ros2_control_node",
-        parameters=[{'robot_description': robot_description},
-                    controller_params_file],
-    )
 
     delay_controller_manager = TimerAction(period=3.0, actions=[controller_manager])
 

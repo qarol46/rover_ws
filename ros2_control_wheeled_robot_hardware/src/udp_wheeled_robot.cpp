@@ -1,107 +1,95 @@
 #include "ros2_control_wheeled_robot_hardware/udp_wheeled_robot.hpp"
-#include <cstdlib>
-#include <cerrno>
+#include <chrono>
+#include <thread>
+#include <iostream>
 
-Eth_Socket::Eth_Socket() = default;
+Eth_Socket::Eth_Socket() : socket_(io_context_) {}
 
-Eth_Socket::~Eth_Socket()
-{
-    if (sock_ != -1) {
-        close(sock_);
+Eth_Socket::~Eth_Socket() {
+    io_context_.stop();
+    if (io_thread_.joinable()) {
+        io_thread_.join();
     }
+    socket_.close();
 }
 
-bool Eth_Socket::Initialize(const std::string& ip, int port, int local_port)
-{
-    // Создание UDP-сокета
-    sock_ = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sock_ == -1) {
-        std::cerr << "Socket creation failed: " << strerror(errno) << std::endl;
-        return false;
-    }
+bool Eth_Socket::Initialize(const std::string& ip, int port, int local_port) {
+    try {
+        socket_.open(asio::ip::udp::v4());
+        socket_.bind(asio::ip::udp::endpoint(asio::ip::udp::v4(), local_port));
+        server_endpoint_ = asio::ip::udp::endpoint(
+            asio::ip::address::from_string(ip), port);
 
-    // Настройка для приема данных
-    memset(&cliaddr_, 0, sizeof(cliaddr_));
-    cliaddr_.sin_family = AF_INET;
-    cliaddr_.sin_port = htons(local_port);
-    cliaddr_.sin_addr.s_addr = htonl(INADDR_ANY);
+        // Установка таймаута
+        socket_.set_option(asio::socket_base::receive_buffer_size(8192));
+        socket_.set_option(asio::socket_base::reuse_address(true));
 
-    // Привязка сокета к адресу
-    if (bind(sock_, (struct sockaddr *)&cliaddr_, sizeof(cliaddr_)) < 0) {
-        std::cerr << "Bind failed: " << strerror(errno) << std::endl;
-        close(sock_);
-        sock_ = -1;
-        return false;
-    }
-
-    // Настройка для отправки данных
-    memset(&servaddr_, 0, sizeof(servaddr_));
-    servaddr_.sin_family = AF_INET;
-    servaddr_.sin_port = htons(port);
-    if (inet_aton(ip.c_str(), &servaddr_.sin_addr) == 0) {
-        std::cerr << "Invalid IP address" << std::endl;
-        close(sock_);
-        sock_ = -1;
-        return false;
-    }
-
-    // Установка таймаута на прием данных
-    struct timeval tv;
-    tv.tv_sec = 0;
-    tv.tv_usec = 500000;  // 500 мс
-    if (setsockopt(sock_, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
-        std::cerr << "Setsockopt failed: " << strerror(errno) << std::endl;
-    }
-
-    return true;
-}
-
-bool Eth_Socket::SendWheelSpeeds(const double speeds[2])
-{
-    if (!IsValid()) {
-        return false;
-    }
-
-    struct wheel_state_message wm;
-    // Преобразуем линейную и угловую скорости в скорости колес
-    for (int i = 0; i < 3; ++i) {
-        wm.wheel_speeds[i] = (speeds[0] - speeds[1]) / 2.0;    // Левые колеса
-        wm.wheel_speeds[i+3] = (speeds[0] + speeds[1]) / 2.0;  // Правые колеса
-    }
-    wm.operating_mode = 0x01;
-
-    if (sendto(sock_, &wm, sizeof(wm), 0,
-        (struct sockaddr *)&servaddr_, sizeof(servaddr_)) < 0) {
-        std::cerr << "Send failed: " << strerror(errno) << std::endl;
-        return false;
-    }
-    return true;
-}
-
-bool Eth_Socket::GetWheelStates(double wheel_speeds[6], double wheel_positions[6])
-{
-    if (!IsValid()) {
-        return false;
-    }
-
-    struct wheel_state_message wm;
-    socklen_t len = sizeof(cliaddr_);
-    
-    int received = recvfrom(sock_, &wm, sizeof(wm), 0,
-                         (struct sockaddr *)&cliaddr_, &len);
-
-    if (received == sizeof(wm)) {
-        memcpy(wheel_speeds, wm.wheel_speeds, sizeof(wm.wheel_speeds));
-        memcpy(wheel_positions, wm.wheel_positions, sizeof(wm.wheel_positions));
+        io_thread_ = std::thread([this]() { io_context_.run(); });
+        start_receive();
         return true;
-    } else {
-        if (received < 0) {
-            std::cerr << "Receive failed: " << strerror(errno) << std::endl;
-        } else {
-            std::cerr << "Incomplete data received" << std::endl;
-        }
-        memset(wheel_speeds, 0, sizeof(double) * 6);
-        memset(wheel_positions, 0, sizeof(double) * 6);
+    } catch (const std::exception& e) {
+        std::cerr << "UDP initialization error: " << e.what() << std::endl;
         return false;
     }
+}
+bool Eth_Socket::SendWheelSpeeds(const double speeds[2]) {
+    try {
+        Message msg;
+        msg.linear_vel = static_cast<int16_t>(speeds[0] * 1000);  // м/с -> мм/с
+        msg.angular_vel = static_cast<int16_t>(speeds[1] * 1000); // рад/с -> мрад/с
+
+        std::array<uint8_t, sizeof(Message)> send_buffer;
+        std::memcpy(send_buffer.data(), &msg, sizeof(Message));
+
+        response_received_ = false;
+        socket_.async_send_to(
+            asio::buffer(send_buffer), server_endpoint_,
+            [this](const asio::error_code& error, size_t /*bytes_sent*/) {
+                if (error) {
+                    std::cerr << "Send error: " << error.message() << std::endl;
+                }
+            });
+
+        // Ждем ответа с таймаутом
+        auto start = std::chrono::steady_clock::now();
+        while (!response_received_ && 
+               std::chrono::steady_clock::now() - start < std::chrono::milliseconds(500)) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+
+        return response_received_;
+    } catch (const std::exception& e) {
+        std::cerr << "Send error: " << e.what() << std::endl;
+        return false;
+    }
+}
+
+bool Eth_Socket::GetWheelStates(double speeds[6], double positions[6]) {
+    if (!response_received_) {
+        return false;
+    }
+
+    for (int i = 0; i < 6; ++i) {
+        speeds[i] = last_received_msg_.velocity[i] / 1000.0;  // мм/с -> м/с
+        positions[i] = last_received_msg_.odom[i] / 1000.0;   // мм -> м
+    }
+    return true;
+}
+
+void Eth_Socket::start_receive() {
+    socket_.async_receive_from(
+        asio::buffer(recv_buffer_), remote_endpoint_,
+        [this](const asio::error_code& error, size_t bytes_transferred) {
+            this->handle_receive(error, bytes_transferred);
+        });
+}
+
+void Eth_Socket::handle_receive(const asio::error_code& error, size_t bytes_transferred) {
+    if (!error && bytes_transferred == sizeof(Message)) {
+        std::memcpy(&last_received_msg_, recv_buffer_.data(), sizeof(Message));
+        response_received_ = true;
+    } else if (error) {
+        std::cerr << "Receive error: " << error.message() << std::endl;
+    }
+    start_receive();
 }
