@@ -33,6 +33,7 @@ private:
   // UDP-сокет для обмена данными с оборудованием
   std::unique_ptr<Eth_Socket> udp_socket_;
   bool udp_initialized_;
+  bool is_active_ = false;
 
   // Векторы для хранения состояний и команд
   std::vector<double> hw_positions_; 

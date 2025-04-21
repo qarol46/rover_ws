@@ -131,7 +131,8 @@ hardware_interface::CallbackReturn WheeledRobotHardware::on_activate(
   for (size_t i = 0; i < hw_commands_.size(); ++i) {
     hw_commands_[i] = hw_velocities_[i];
   }
-
+  
+  is_active_ = true;
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
@@ -144,65 +145,76 @@ hardware_interface::CallbackReturn WheeledRobotHardware::on_deactivate(
   std::fill(hw_commands_.begin(), hw_commands_.end(), 0.0);
   write(rclcpp::Time(), rclcpp::Duration(0, 0));
 
+  is_active_ = false;
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
 hardware_interface::return_type WheeledRobotHardware::read(
   const rclcpp::Time & /*time*/, const rclcpp::Duration & period)
 {
-  std::vector<double> wheel_velocities(hw_velocities_.size());
-  std::vector<double> wheel_positions(hw_positions_.size());
-
-  if (!udp_socket_->GetWheelStates(wheel_velocities.data(), wheel_positions.data())) {
-    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000, 
-                       "Failed to receive wheel states. Using last values");
+  if (!is_active_) {
+    RCLCPP_DEBUG(get_logger(), "Skipping read - hardware not active");
     return hardware_interface::return_type::OK;
-  }
+  }else{
+    // Основная логика чтения
+    std::vector<double> wheel_velocities(hw_velocities_.size());
+    std::vector<double> wheel_positions(hw_positions_.size());
 
-  for (size_t i = 0; i < hw_velocities_.size(); ++i) {
-    hw_velocities_[i] = wheel_velocities[i];
-    hw_positions_[i] += hw_velocities_[i] * period.seconds(); // Интеграция позиции
-  }
+    if (!udp_socket_->GetWheelStates(wheel_velocities.data(), wheel_positions.data())) {
+      RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000, 
+                         "Failed to receive wheel states");
+      return hardware_interface::return_type::OK;
+    }
 
+    for (size_t i = 0; i < hw_velocities_.size(); ++i) {
+      hw_velocities_[i] = wheel_velocities[i];
+      hw_positions_[i] += hw_velocities_[i] * period.seconds();
+    }
+  }
   return hardware_interface::return_type::OK;
 }
 
 hardware_interface::return_type WheeledRobotHardware::write(
   const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
-{
-  if (hw_commands_.size() < 2) {
-    return hardware_interface::return_type::ERROR;
-  }
-
-  // Рассчитываем средние скорости для левых и правых колес
-  double left_avg = 0.0, right_avg = 0.0;
-  size_t left_count = 0, right_count = 0;
-  
-  for (size_t i = 0; i < hw_commands_.size(); ++i) {
-    if (info_.joints[i].name.find("left") != std::string::npos) {
-      left_avg += hw_commands_[i];
-      left_count++;
-    } else if (info_.joints[i].name.find("right") != std::string::npos) {
-      right_avg += hw_commands_[i];
-      right_count++;
+{ 
+  if(!is_active_){
+    RCLCPP_DEBUG(get_logger(), "Skipping write - hardware not active");
+    return hardware_interface::return_type::OK;
+  }else{
+    if (hw_commands_.size() < 2) {
+      return hardware_interface::return_type::ERROR;
     }
-  }
 
-  if (left_count > 0) left_avg /= left_count;
-  if (right_count > 0) right_avg /= right_count;
+    // Рассчитываем средние скорости для левых и правых колес
+    double left_avg = 0.0, right_avg = 0.0;
+    size_t left_count = 0, right_count = 0;
+  
+    for (size_t i = 0; i < hw_commands_.size(); ++i) {
+      if (info_.joints[i].name.find("left") != std::string::npos) {
+        left_avg += hw_commands_[i];
+        left_count++;
+      } else if (info_.joints[i].name.find("right") != std::string::npos) {
+        right_avg += hw_commands_[i];
+        right_count++;
+      }
+    }
 
-  // Преобразуем в линейную и угловую скорости
-  double velocity_command[2] = {
+    if (left_count > 0) left_avg /= left_count;
+    if (right_count > 0) right_avg /= right_count;
+
+    // Преобразуем в линейную и угловую скорости
+    double velocity_command[2] = {
       (left_avg + right_avg) * wheel_radius_ / 2.0,  // linear (m/s)
       (right_avg - left_avg) * wheel_radius_ / wheel_separation_  // angular (rad/s)
-  };
+    };
 
-  if (!udp_socket_->SendWheelSpeeds(velocity_command)) {
-    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000, 
+    if (!udp_socket_->SendWheelSpeeds(velocity_command)) {
+      RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000, 
                         "Failed to send wheel speeds");
-    return hardware_interface::return_type::ERROR;
+      return hardware_interface::return_type::ERROR;
+    }
   }
-
+  
   return hardware_interface::return_type::OK;
 }
 
