@@ -18,7 +18,7 @@ bool Eth_Socket::Initialize(const std::string& ip, int port, int local_port) {
         socket_.open(asio::ip::udp::v4());
         socket_.bind(asio::ip::udp::endpoint(asio::ip::udp::v4(), local_port));
         server_endpoint_ = asio::ip::udp::endpoint(
-            asio::ip::address::from_string("127.0.0.1"), 8889);
+            asio::ip::address::from_string("127.0.0.1"), 8888);
 
         // Установка таймаута
         socket_.set_option(asio::socket_base::receive_buffer_size(8192));
