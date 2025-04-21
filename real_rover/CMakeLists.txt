@@ -12,10 +12,16 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(ros2_control_wheeled_robot_hardware REQUIRED)
+find_package(rclcpp_lifecycle REQUIRED)  # Добавлена новая зависимость
 
 install(
   DIRECTORY config launch meshes urdf
   DESTINATION share/${PROJECT_NAME}
+)
+
+ament_export_dependencies(
+  ros2_control_wheeled_robot_hardware
+  rclcpp_lifecycle  # Добавлено в экспортируемые зависимости
 )
 
 ament_package()

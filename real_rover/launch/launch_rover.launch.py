@@ -18,7 +18,7 @@ def generate_launch_description():
         )]), launch_arguments={'use_sim_time': 'false', 'use_ros2_control': 'true'}.items()
     )
 
-    robot_description = Command(['ros2 param get --hide-type /robot_state_publisher robot_description'])
+    robot_description = Command(['xacro ', os.path.join(get_package_share_directory(package_name), 'urdf', 'trk211.xacro')])
     
     controller_params_file = os.path.join(get_package_share_directory(package_name),'config','controllers.yaml')
 
@@ -35,7 +35,7 @@ def generate_launch_description():
     #            )]), launch_arguments={'use_sim_time': 'true'}.items()
     #)
 
-    rviz_config_file = os.path.join(get_package_share_directory(package_name), 'config', 'description.rviz')
+    rviz_config_file = os.path.join(get_package_share_directory(package_name), 'config', 'rviz_config.rviz')
     start_rviz_cmd = Node(
         package='rviz2',
         executable='rviz2',

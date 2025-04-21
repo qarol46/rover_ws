@@ -14,6 +14,8 @@
   <depend>rclcpp</depend>
   <depend>pluginlib</depend>
   <depend>asio</depend>
+  <depend>rclcpp_lifecycle</depend>
+  
   <!-- Экспорт зависимостей -->
   <export>
     <build_type>ament_cmake</build_type>

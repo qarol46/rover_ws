@@ -22,7 +22,6 @@ public:
 
   // Методы интерфейса оборудования
   hardware_interface::CallbackReturn on_init(const hardware_interface::HardwareInfo & info) override;
-  hardware_interface::CallbackReturn on_configure(const rclcpp_lifecycle::State & previous_state) override;
   std::vector<hardware_interface::StateInterface> export_state_interfaces() override;
   std::vector<hardware_interface::CommandInterface> export_command_interfaces() override;
   hardware_interface::CallbackReturn on_activate(const rclcpp_lifecycle::State & previous_state) override;
@@ -33,6 +32,7 @@ public:
 private:
   // UDP-сокет для обмена данными с оборудованием
   std::unique_ptr<Eth_Socket> udp_socket_;
+  bool udp_initialized_;
 
   // Векторы для хранения состояний и команд
   std::vector<double> hw_positions_; 

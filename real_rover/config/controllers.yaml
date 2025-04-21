@@ -20,7 +20,18 @@ diff_cont:
     wheel_radius: 0.19 # Радиус колес (м)
     use_stamped_vel: false  # Использование stamped velocity (со временем)
     wheels_per_side: 3
-    
+    joints:
+      - base_to_l_f_wheel
+      - base_to_l_m_wheel
+      - base_to_l_r_wheel
+      - base_to_r_f_wheel
+      - base_to_r_m_wheel
+      - base_to_r_r_wheel
+    command_interfaces:
+      - velocity
+    state_interfaces:
+      - velocity
+      - position
     # Дополнительные параметры (раскомментируйте, если нужно)
     # odom_frame_id: odom  # Фрейм одометрии
     # enable_odom_tf: true  # Включение публикации TF для одометрии
@@ -30,3 +41,18 @@ diff_cont:
     # cmd_vel_timeout: 0.5  # Таймаут команд (сек)
     # publish_limited_velocity: true  # Публикация ограниченной скорости
     # velocity_rolling_window_size: 10  # Размер окна для расчета скорости
+
+joint_broad:
+  ros__parameters:
+    joints:
+      - base_to_l_f_wheel
+      - base_to_l_m_wheel
+      - base_to_l_r_wheel
+      - base_to_r_f_wheel
+      - base_to_r_m_wheel
+      - base_to_r_r_wheel
+    command_interfaces:
+      - velocity
+    state_interfaces:
+      - velocity
+      - position

@@ -5,6 +5,7 @@ find_package(ament_cmake REQUIRED)
 find_package(hardware_interface REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(pluginlib REQUIRED)
+find_package(rclcpp_lifecycle REQUIRED)  # Добавлена новая зависимость
 
 # Основная библиотека
 add_library(ros2_control_wheeled_robot_hardware SHARED
@@ -22,6 +23,7 @@ ament_target_dependencies(ros2_control_wheeled_robot_hardware
   hardware_interface
   rclcpp
   pluginlib
+  rclcpp_lifecycle  # Добавлено в зависимости цели
 )
 
 # Тестовая нода для проверки UDP
@@ -56,6 +58,7 @@ ament_export_dependencies(
   hardware_interface
   rclcpp
   pluginlib
+  rclcpp_lifecycle  # Добавлено в экспортируемые зависимости
 )
 
 ament_package()
