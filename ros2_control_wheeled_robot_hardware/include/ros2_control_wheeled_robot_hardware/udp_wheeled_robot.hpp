@@ -5,6 +5,8 @@
 #include <asio.hpp>
 #include <memory>
 #include <atomic>
+#include <iostream>
+#include <thread>
 
 class Eth_Socket
 {
@@ -16,7 +18,7 @@ public:
     bool IsValid() const { return socket_.is_open(); }
 
     bool SendWheelSpeeds(const double speeds[2]);
-    bool GetWheelStates(double speeds[6], double positions[6]);
+    bool GetWheelStates(double speeds[6]);
 
 private:
     void handle_receive(const asio::error_code& error, size_t bytes_transferred);

@@ -28,7 +28,7 @@ private:
 
         // Тест приема
         double speeds[6], positions[6];
-        if (udp_socket_->GetWheelStates(speeds, positions)) {
+        if (udp_socket_->GetWheelStates(speeds)) {
             RCLCPP_INFO(get_logger(), "Received: ");
             for (int i = 0; i < 6; ++i) {
                 RCLCPP_INFO(get_logger(), "Wheel %d: speed=%.2f, pos=%.2f", 
