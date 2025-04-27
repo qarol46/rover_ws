@@ -11,6 +11,8 @@ controller_manager:
 # ----------------- DiffDriveController -----------------
 diff_cont:
   ros__parameters: 
+    use_position: false  # Явное отключение
+    use_velocity: true
     left_wheel_names: 
       - "base_to_l_f_wheel"
       - "base_to_l_m_wheel"

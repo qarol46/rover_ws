@@ -67,7 +67,7 @@ public:
         std::memset(&servaddr_, 0, sizeof(servaddr_));
         servaddr_.sin_family = AF_INET;
         servaddr_.sin_addr.s_addr = inet_addr("127.0.0.1");
-        servaddr_.sin_port = htons(5002);
+        servaddr_.sin_port = htons(8889);
 
         // Привязка адреса сервера к сокету
         if (bind(socket_fd_, (const struct sockaddr *)&servaddr_, sizeof(servaddr_)) < 0) {

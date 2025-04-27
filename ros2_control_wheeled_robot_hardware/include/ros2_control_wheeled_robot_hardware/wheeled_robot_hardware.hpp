@@ -1,3 +1,4 @@
+// wheeled_robot_hardware.hpp
 #ifndef WHEELED_ROBOT_HARDWARE_HPP_
 #define WHEELED_ROBOT_HARDWARE_HPP_
 
@@ -39,6 +40,7 @@ private:
   
   std::vector<double> hw_commands_;
   std::vector<double> hw_velocities_;
+  std::vector<double> hw_positions_;  // Added for position state
   
   double wheel_separation_ = 0.0;
   double wheel_radius_ = 0.0;

@@ -1,3 +1,4 @@
+// wheeled_robot_hardware.cpp
 #include "ros2_control_wheeled_robot_hardware/wheeled_robot_hardware.hpp"
 #include "rclcpp/clock.hpp"
 #include <chrono>
@@ -25,6 +26,7 @@ hardware_interface::CallbackReturn WheeledRobotHardware::on_init(
 
   hw_velocities_.resize(info_.joints.size(), 0.0);
   hw_commands_.resize(info_.joints.size(), 0.0);
+  hw_positions_.resize(info_.joints.size(), 0.0);  // Initialize position storage
 
   // Validate joint interfaces
   for (const auto & joint : info_.joints) {
@@ -36,8 +38,10 @@ hardware_interface::CallbackReturn WheeledRobotHardware::on_init(
     }
 
     bool has_velocity = false;
+    bool has_position = false;
     for (const auto & state_interface : joint.state_interfaces) {
       if (state_interface.name == hardware_interface::HW_IF_VELOCITY) has_velocity = true;
+      if (state_interface.name == hardware_interface::HW_IF_POSITION) has_position = true;
     }
 
     if (!has_velocity) {
@@ -83,6 +87,17 @@ WheeledRobotHardware::export_state_interfaces()
         info_.joints[i].name,
         hardware_interface::HW_IF_VELOCITY,
         &hw_velocities_[i]));
+        
+    // Add position state interface if it's declared in the URDF
+    for (const auto & state_interface : info_.joints[i].state_interfaces) {
+      if (state_interface.name == hardware_interface::HW_IF_POSITION) {
+        state_interfaces.emplace_back(
+          hardware_interface::StateInterface(
+            info_.joints[i].name,
+            hardware_interface::HW_IF_POSITION,
+            &hw_positions_[i]));
+      }
+    }
   }
   return state_interfaces;
 }
@@ -102,7 +117,7 @@ WheeledRobotHardware::export_command_interfaces()
 }
 
 hardware_interface::CallbackReturn WheeledRobotHardware::on_activate(
-  const rclcpp_lifecycle::State & /*previous_state*/)
+  const rclcpp_lifecycle::State & )
 {
   RCLCPP_INFO(logger_, "Activating hardware interface");
   
@@ -115,7 +130,7 @@ hardware_interface::CallbackReturn WheeledRobotHardware::on_activate(
 }
 
 hardware_interface::CallbackReturn WheeledRobotHardware::on_deactivate(
-  const rclcpp_lifecycle::State & /*previous_state*/)
+  const rclcpp_lifecycle::State & )
 {
   RCLCPP_INFO(logger_, "Deactivating hardware interface");
   
@@ -127,20 +142,24 @@ hardware_interface::CallbackReturn WheeledRobotHardware::on_deactivate(
 }
 
 hardware_interface::return_type WheeledRobotHardware::read(
-  const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
+  const rclcpp::Time & /*time*/, const rclcpp::Duration & period)
 {
   double wheel_velocities[6];
-  if (!udp_socket_->GetWheelStates(wheel_velocities)) {
+  double wheel_positions[6];
+  
+  if (!udp_socket_->GetWheelStates(wheel_velocities, wheel_positions)) {
     RCLCPP_ERROR_THROTTLE(
       logger_,
       *clock_,
       1000, 
       "Failed to receive wheel states");
-    return hardware_interface::return_type::OK;
   }
 
   for (size_t i = 0; i < hw_velocities_.size(); ++i) {
     hw_velocities_[i] = wheel_velocities[i];
+    
+    // Integrate velocity to get position (simple Euler integration)
+    hw_positions_[i] += hw_velocities_[i] * period.seconds();
   }
 
   return hardware_interface::return_type::OK;
@@ -158,10 +177,10 @@ hardware_interface::return_type WheeledRobotHardware::write(
   size_t left_count = 0, right_count = 0;
 
   for (size_t i = 0; i < hw_commands_.size(); ++i) {
-    if (info_.joints[i].name.find("left") != std::string::npos) {
+    if (info_.joints[i].name.find("l") != std::string::npos) {
       left_avg += hw_commands_[i];
       left_count++;
-    } else if (info_.joints[i].name.find("right") != std::string::npos) {
+    } else if (info_.joints[i].name.find("r") != std::string::npos) {
       right_avg += hw_commands_[i];
       right_count++;
     }
@@ -182,7 +201,7 @@ hardware_interface::return_type WheeledRobotHardware::write(
       *clock_,
       1000,
       "Failed to send wheel speeds");
-    return hardware_interface::return_type::ERROR;
+    //return hardware_interface::return_type::ERROR;
   }
 
   return hardware_interface::return_type::OK;

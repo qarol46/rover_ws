@@ -1,3 +1,4 @@
+// udp_wheeled_robot.hpp
 #ifndef UDP_WHEELED_ROBOT_HPP_
 #define UDP_WHEELED_ROBOT_HPP_
 
@@ -18,7 +19,7 @@ public:
     bool IsValid() const { return socket_.is_open(); }
 
     bool SendWheelSpeeds(const double speeds[2]);
-    bool GetWheelStates(double speeds[6]);
+    bool GetWheelStates(double velocities[6], double positions[6]);  // Updated signature
 
 private:
     void handle_receive(const asio::error_code& error, size_t bytes_transferred);

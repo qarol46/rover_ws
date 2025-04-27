@@ -26,22 +26,12 @@ ament_target_dependencies(ros2_control_wheeled_robot_hardware
   rclcpp_lifecycle  # Добавлено в зависимости цели
 )
 
-# Тестовая нода для проверки UDP
-add_executable(udp_test_node 
-  src/udp_test_node.cpp
-)
-
-target_link_libraries(udp_test_node
+target_link_libraries(
   ros2_control_wheeled_robot_hardware
-)
-
-ament_target_dependencies(udp_test_node
-  rclcpp
 )
 
 install(TARGETS 
   ros2_control_wheeled_robot_hardware
-  udp_test_node
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}
