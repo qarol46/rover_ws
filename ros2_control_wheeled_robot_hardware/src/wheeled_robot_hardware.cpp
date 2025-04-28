@@ -177,10 +177,10 @@ hardware_interface::return_type WheeledRobotHardware::write(
   size_t left_count = 0, right_count = 0;
 
   for (size_t i = 0; i < hw_commands_.size(); ++i) {
-    if (info_.joints[i].name.find("l") != std::string::npos) {
+    if (info_.joints[i].name.find("left") != std::string::npos) {
       left_avg += hw_commands_[i];
       left_count++;
-    } else if (info_.joints[i].name.find("r") != std::string::npos) {
+    } else if (info_.joints[i].name.find("right") != std::string::npos) {
       right_avg += hw_commands_[i];
       right_count++;
     }
@@ -201,9 +201,7 @@ hardware_interface::return_type WheeledRobotHardware::write(
       *clock_,
       1000,
       "Failed to send wheel speeds");
-    //return hardware_interface::return_type::ERROR;
   }
-
   return hardware_interface::return_type::OK;
 }
 

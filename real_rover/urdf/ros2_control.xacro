@@ -18,32 +18,32 @@
     </hardware>
 
     <!-- Конфигурация суставов -->
-    <joint name="base_to_l_f_wheel">
+    <joint name="base_to_left_forward_wheel">
       <state_interface name="velocity"/>
       <state_interface name="position"/>
       <command_interface name="velocity"/>
     </joint>
-    <joint name="base_to_l_m_wheel">
+    <joint name="base_to_left_middle_wheel">
       <state_interface name="velocity"/>
       <state_interface name="position"/>
       <command_interface name="velocity"/>
     </joint>
-    <joint name="base_to_l_r_wheel">
+    <joint name="base_to_left_rear_wheel">
       <state_interface name="velocity"/>
       <state_interface name="position"/>
       <command_interface name="velocity"/>
     </joint>
-    <joint name="base_to_r_f_wheel">
+    <joint name="base_to_right_forward_wheel">
       <state_interface name="velocity"/>
       <state_interface name="position"/>
       <command_interface name="velocity"/>
     </joint>
-    <joint name="base_to_r_m_wheel">
+    <joint name="base_to_right_middle_wheel">
       <state_interface name="velocity"/>
       <state_interface name="position"/>
       <command_interface name="velocity"/>
     </joint>
-    <joint name="base_to_r_r_wheel">
+    <joint name="base_to_right_rear_wheel">
       <state_interface name="velocity"/>
       <state_interface name="position"/>
       <command_interface name="velocity"/>
