@@ -183,6 +183,7 @@ private:
                     log_file_ << "[" << timestamp.str() << "] Wheel " << i << " - Velocity: " << wheel_velocity
                               << " m/s, Odom: " << odom_counter[i] << ", Torque: " << torque << "\n";
                 }
+                RCLCPP_INFO(this->get_logger(), "Wheel %d - Velocity: %f m/s, Odom: %d, Torque: %d", i, wheel_velocity, odom_counter[i], torque);
             }
 
             // Копируем структуру в буфер для отправки

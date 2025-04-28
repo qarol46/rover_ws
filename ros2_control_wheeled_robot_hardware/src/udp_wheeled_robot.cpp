@@ -18,9 +18,11 @@ Eth_Socket::~Eth_Socket() {
 bool Eth_Socket::Initialize(const std::string& ip, int port, int local_port) {
   try {
     socket_.open(asio::ip::udp::v4());
-    socket_.bind(asio::ip::udp::endpoint(asio::ip::udp::v4(), local_port));
+    // Клиент привязывается к порту 8888
+    socket_.bind(asio::ip::udp::endpoint(asio::ip::udp::v4(), 8888));
+    // Сервер на порту 8889
     server_endpoint_ = asio::ip::udp::endpoint(
-      asio::ip::address::from_string(ip), port);
+      asio::ip::address::from_string(ip), 8889);
 
     // Set socket options
     socket_.set_option(asio::socket_base::receive_buffer_size(8192));
@@ -31,8 +33,8 @@ bool Eth_Socket::Initialize(const std::string& ip, int port, int local_port) {
     start_receive();
     
     RCLCPP_INFO(rclcpp::get_logger("Eth_Socket"), 
-               "UDP initialized: remote %s:%d, local port %d", 
-               ip.c_str(), port, local_port);
+               "UDP Client initialized: local port 8888, server %s:8889", 
+               ip.c_str());
     
     return true;
   } catch (const std::exception& e) {
