@@ -28,9 +28,9 @@ diff_cont:
       - position
     wheel_separation: 0.8
     wheel_radius: 0.19
-    udp_ip: "127.0.0.1"
-    udp_port: 8889    # Порт сервера
-    local_port: 8888 
+    #udp_ip: "127.0.0.1"
+    #udp_port: 8889    # Порт сервера
+    #local_port: 8888 
     cmd_vel_timeout: 0.5
     use_stamped_vel: false
     state_publish_rate: 50.0 # Defaults to 50

@@ -19,10 +19,6 @@ ament_target_dependencies(plat_part
   tf2_ros
 )
 
-install(DIRECTORY include/
-  DESTINATION include
-)
-
 install(TARGETS
   plat_part
   DESTINATION lib/${PROJECT_NAME})

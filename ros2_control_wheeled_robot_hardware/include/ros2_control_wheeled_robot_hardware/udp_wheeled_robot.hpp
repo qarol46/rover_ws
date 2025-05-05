@@ -23,6 +23,7 @@ public:
 private:
     void handle_receive(const asio::error_code& error, size_t bytes_transferred);
     void start_receive();
+    bool first_update_ = true;
 
     asio::io_context io_context_;
     asio::ip::udp::socket socket_;

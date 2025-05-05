@@ -1,11 +1,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <asio.hpp>
-#include <iostream>
-#include <fstream>
-#include <chrono>
 #include <iomanip>
 
-// Встроенная структура сообщения (аналог message.hpp)
 #pragma pack(push, 1)
 struct Message {
     uint8_t number_device;
@@ -50,7 +46,6 @@ public:
             socket_.bind(asio::ip::udp::endpoint(
                 asio::ip::address::from_string("127.0.0.1"), 8889));
             
-            log_file_.open("udp_server_log.txt", std::ios::out | std::ios::app);
             RCLCPP_INFO(this->get_logger(), "UDP Server started on port 8889");
             
             io_thread_ = std::thread([this]() { io_context_.run(); });
@@ -64,7 +59,6 @@ public:
     ~UDPEchoServer() {
         io_context_.stop();
         if (io_thread_.joinable()) io_thread_.join();
-        if (log_file_.is_open()) log_file_.close();
     }
 
 private:
@@ -81,16 +75,31 @@ private:
             Message recv_msg;
             std::memcpy(&recv_msg, recv_buffer_.data(), sizeof(Message));
 
-            // Логирование
-            log_message("Received", recv_msg);
+            // Логирование полученных данных
+            RCLCPP_INFO(this->get_logger(), "Received cmd: lin=%.3f m/s, ang=%.3f rad/s", 
+                       static_cast<double>(recv_msg.linear_vel) / 1000.0,
+                       static_cast<double>(recv_msg.angular_vel) / 1000.0);
+            
+            // Лог сырых данных
+            log_raw_data("Received raw", recv_buffer_);
 
-            // Подготовка ответа
-            Message send_msg = recv_msg;
-            process_wheel_data(send_msg);
+            // Подготовка ответа с пересчитанными данными
+            Message send_msg;
+            process_wheel_data(recv_msg, send_msg);
 
-            // Отправка ответа
+            // Логирование отправляемых данных
+            RCLCPP_INFO(this->get_logger(), "Sending: velocities=[%d, %d, %d, %d, %d, %d], odom=[%d, %d, %d, %d, %d, %d]",
+                       send_msg.velocity[0], send_msg.velocity[1], send_msg.velocity[2],
+                       send_msg.velocity[3], send_msg.velocity[4], send_msg.velocity[5],
+                       send_msg.odom[0], send_msg.odom[1], send_msg.odom[2],
+                       send_msg.odom[3], send_msg.odom[4], send_msg.odom[5]);
+            
+            // Лог сырых данных
             std::array<uint8_t, sizeof(Message)> send_buffer;
             std::memcpy(send_buffer.data(), &send_msg, sizeof(Message));
+            log_raw_data("Sending raw", send_buffer);
+
+            // Отправка ответа
             socket_.async_send_to(
                 asio::buffer(send_buffer), remote_endpoint_,
                 [this](const asio::error_code& error, size_t /*bytes_sent*/) {
@@ -99,42 +108,41 @@ private:
                     }
                     start_receive();
                 });
-            
-            log_message("Sent", send_msg);
         } else {
             start_receive();
         }
     }
 
-    void process_wheel_data(Message& msg) {
-        double linear = static_cast<double>(msg.linear_vel) / 1000.0;
-        double angular = static_cast<double>(msg.angular_vel) / 1000.0;
+    void process_wheel_data(const Message& input, Message& output) {
+        // Копируем заголовочные поля
+        output.number_device = input.number_device;
+        output.operating_mode = input.operating_mode;
+        output.work_device = input.work_device;
+        output.sender_addres = input.sender_addres;
+
+        double linear = static_cast<double>(input.linear_vel) / 1000.0;
+        double angular = static_cast<double>(input.angular_vel) / 1000.0;
 
         for (int i = 0; i < 6; i++) {
+            // Рассчитываем скорость для каждого колеса
             double wheel_vel = linear + ((i < 3) ? -1 : 1) * angular * 0.4;
-            msg.velocity[i] = static_cast<int16_t>(wheel_vel * 1000);
+            output.velocity[i] = static_cast<int16_t>(wheel_vel * 1000);
             
+            // Обновляем одометрию
             static uint32_t odom_counter[6] = {0};
-            odom_counter[i] += abs(msg.velocity[i]);
-            msg.odom[i] = static_cast<int16_t>(odom_counter[i] % 65535);
+            odom_counter[i] += abs(output.velocity[i]);
+            output.odom[i] = static_cast<int16_t>(odom_counter[i] % 65535);
         }
     }
 
-    void log_message(const std::string& prefix, const Message& msg) {
-        auto now = std::chrono::system_clock::now();
-        auto now_time_t = std::chrono::system_clock::to_time_t(now);
-        auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
-
-        std::stringstream log_line;
-        log_line << "[" << std::put_time(std::localtime(&now_time_t), "%Y-%m-%d %H:%M:%S")
-                 << "." << std::setfill('0') << std::setw(3) << now_ms.count() << "] "
-                 << prefix << " - Linear: " << (msg.linear_vel / 1000.0) << " m/s, "
-                 << "Angular: " << (msg.angular_vel / 1000.0) << " rad/s";
-
-        RCLCPP_INFO(this->get_logger(), "%s", log_line.str().c_str());
-        if (log_file_.is_open()) {
-            log_file_ << log_line.str() << "\n";
+    void log_raw_data(const std::string& prefix, const std::array<uint8_t, sizeof(Message)>& buffer) {
+        std::stringstream ss;
+        ss << prefix << " data: ";
+        for (size_t i = 0; i < buffer.size(); ++i) {
+            ss << std::hex << std::setw(2) << std::setfill('0') 
+               << static_cast<int>(buffer[i]) << " ";
         }
+        RCLCPP_INFO(this->get_logger(), "%s", ss.str().c_str());
     }
 
     asio::io_context io_context_;
@@ -142,7 +150,6 @@ private:
     asio::ip::udp::endpoint remote_endpoint_;
     std::array<uint8_t, sizeof(Message)> recv_buffer_;
     std::thread io_thread_;
-    std::ofstream log_file_;
 };
 
 int main(int argc, char *argv[]) {

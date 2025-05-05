@@ -82,15 +82,15 @@ WheeledRobotHardware::export_state_interfaces()
         hardware_interface::HW_IF_VELOCITY,
         &hw_velocities_[i]));
         
-    // Add position state interface if it's declared in the URDF
-    for (const auto & state_interface : info_.joints[i].state_interfaces) {
-      if (state_interface.name == hardware_interface::HW_IF_POSITION) {
-        state_interfaces.emplace_back(
-          hardware_interface::StateInterface(
-            info_.joints[i].name,
-            hardware_interface::HW_IF_POSITION,
-            &hw_positions_[i]));
-      }
+    if (std::find_if(info_.joints[i].state_interfaces.begin(),
+                    info_.joints[i].state_interfaces.end(),
+                    [](const auto& si) { return si.name == hardware_interface::HW_IF_POSITION; })
+        != info_.joints[i].state_interfaces.end()) {
+      state_interfaces.emplace_back(
+        hardware_interface::StateInterface(
+          info_.joints[i].name,
+          hardware_interface::HW_IF_POSITION,
+          &hw_positions_[i]));
     }
   }
   return state_interfaces;
@@ -139,8 +139,8 @@ hardware_interface::return_type WheeledRobotHardware::read(
   const rclcpp::Time & time, const rclcpp::Duration & period)
 {
   if (!socket_connected_) {
-    RCLCPP_WARN(logger_, "Socket not connected");
-    return hardware_interface::return_type::ERROR;
+    RCLCPP_INFO(logger_, "Socket not connected, skipping read");
+    return hardware_interface::return_type::OK;
   }
 
   double wheel_velocities[6] = {0};
@@ -151,7 +151,6 @@ hardware_interface::return_type WheeledRobotHardware::read(
       last_successful_comm_ = time;
       first_read_ = false;
     }
-    RCLCPP_INFO(logger_, "GetWheelStates success");
 
     for (size_t i = 0; i < hw_velocities_.size(); ++i) {
       hw_velocities_[i] = wheel_velocities[i];
@@ -159,14 +158,13 @@ hardware_interface::return_type WheeledRobotHardware::read(
     }
     
     last_successful_comm_ = time;
+    RCLCPP_INFO(logger_, "Successfully read wheel states");
   } else {
     if (!first_read_ && (time - last_successful_comm_).seconds() > COMM_TIMEOUT) {
       socket_connected_ = false;
-      RCLCPP_ERROR(logger_, "Communication timeout, marking socket as disconnected");
+      RCLCPP_WARN(logger_, "Communication timeout, marking socket as disconnected");
     }
-    return hardware_interface::return_type::ERROR;
-
-    RCLCPP_INFO(logger_, "GetWheelStates failed");
+    RCLCPP_INFO(logger_, "No new wheel states received");
   }
 
   return hardware_interface::return_type::OK;
@@ -176,12 +174,13 @@ hardware_interface::return_type WheeledRobotHardware::write(
   const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
   if (!socket_connected_) {
-    RCLCPP_WARN(logger_, "Unable to send commands - socket disconnected");
-    return hardware_interface::return_type::ERROR;
+    RCLCPP_INFO(logger_, "Socket not connected, skipping write");
+    return hardware_interface::return_type::OK;
   }
 
   if (hw_commands_.size() < 2) {
-    return hardware_interface::return_type::ERROR;
+    RCLCPP_WARN(logger_, "Not enough command interfaces");
+    return hardware_interface::return_type::OK;
   }
 
   double left_avg = 0.0, right_avg = 0.0;
@@ -205,11 +204,12 @@ hardware_interface::return_type WheeledRobotHardware::write(
     (right_avg - left_avg) * wheel_radius_ / wheel_separation_
   };
 
-  if (!udp_socket_->SendWheelSpeeds(velocity_command)) {
-    RCLCPP_ERROR(logger_, "Failed to send wheel speeds");
-    socket_connected_ = false;
-    return hardware_interface::return_type::ERROR;
-  }
+  RCLCPP_DEBUG(logger_, 
+              "Calculated commands: left=%.2f, right=%.2f, lin=%.3f, ang=%.3f",
+              left_avg, right_avg, velocity_command[0], velocity_command[1]);
+
+  // Отправляем команды (результат игнорируем)
+  udp_socket_->SendWheelSpeeds(velocity_command);
   
   return hardware_interface::return_type::OK;
 }
