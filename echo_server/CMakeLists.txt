@@ -19,8 +19,16 @@ ament_target_dependencies(plat_part
   tf2_ros
 )
 
+install(DIRECTORY include/
+  DESTINATION include
+)
+
 install(TARGETS
   plat_part
   DESTINATION lib/${PROJECT_NAME})
 
+ament_export_dependencies(
+  rclcpp
+  ros2_control_wheeled_robot_hardware
+)
 ament_package()

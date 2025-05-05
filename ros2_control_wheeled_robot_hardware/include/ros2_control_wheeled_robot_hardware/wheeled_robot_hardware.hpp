@@ -1,4 +1,3 @@
-// wheeled_robot_hardware.hpp
 #ifndef WHEELED_ROBOT_HARDWARE_HPP_
 #define WHEELED_ROBOT_HARDWARE_HPP_
 
@@ -11,7 +10,6 @@
 #include "hardware_interface/hardware_info.hpp"
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "rclcpp/clock.hpp"
 #include "rclcpp_lifecycle/state.hpp"
 #include "udp_wheeled_robot.hpp"
 
@@ -36,14 +34,17 @@ public:
 private:
   std::unique_ptr<Eth_Socket> udp_socket_;
   bool hardware_initialized_ = false;
-  std::shared_ptr<rclcpp::Clock> clock_;
+  bool socket_connected_ = false;
   
   std::vector<double> hw_commands_;
   std::vector<double> hw_velocities_;
-  std::vector<double> hw_positions_;  // Added for position state
+  std::vector<double> hw_positions_;
   
   double wheel_separation_ = 0.0;
   double wheel_radius_ = 0.0;
+  rclcpp::Time last_successful_comm_;
+  bool first_read_ = true;
+  static constexpr double COMM_TIMEOUT = 1.0;
   
   rclcpp::Logger logger_;
 };
