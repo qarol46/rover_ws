@@ -1,7 +1,7 @@
 ekf_filter_node:
   ros__parameters:
     publish_tf: true
-    frequency: 50.0
+    frequency: 10.0
     # Задержка перед очисткой буфера (сек)
     tf_timeout: 0.1  
     # Игнорировать небольшие скачки времени
@@ -29,6 +29,6 @@ ekf_filter_node:
     #imu0_differential: false   # IMU не дифференциальный
 
     # Фреймы
-    world_frame: odom           # Глобальный фрейм
-    odom_frame: odom            # Фрейм одометрии
-    base_link_frame: base_link  # Базовый фрейм робота
+    world_frame: odom                 # Глобальный фрейм
+    odom_frame: odom                  # Фрейм одометрии
+    base_link_frame: base_footprint   # Базовый фрейм робота
