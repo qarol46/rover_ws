@@ -10,7 +10,6 @@ from launch.actions import DeclareLaunchArgument
 
 def generate_launch_description():
     package_name = 'rover_description'
-    gazebo_world_file = os.path.join(get_package_share_directory(package_name),'worlds','gas_station.world')
 
     # Запуск rsp.launch.py для публикации robot_description
 
@@ -26,15 +25,16 @@ def generate_launch_description():
     #            )]), launch_arguments={'use_sim_time': 'true'}.items()
     #)
 
-    #ekf_config = os.path.join(get_package_share_directory(package_name), 'config', 'ekf.yaml')
-    #robot_localization_node = Node(
-    #    package='robot_localization',
-    #    executable='ekf_node',
-    #    name='ekf_filter_node',
-    #    output='screen',
-    #    parameters=[ekf_config, {'use_sim_time': True}],
-    #    #remappings=[('odometry/filtered', 'odom')]  # Перенаправляем выходной топик
-    #)
+    #Lead to velodyne queque overload - filter dropping message
+    ekf_config = os.path.join(get_package_share_directory(package_name), 'config', 'ekf.yaml')
+    robot_localization_node = Node(
+        package='robot_localization',
+        executable='ekf_node',
+        name='ekf_filter_node',
+        output='screen',
+        parameters=[ekf_config, {'use_sim_time': True}],
+        #remappings=[('odometry/filtered', 'odom')]  # Перенаправляем выходной топик
+    )
 
 
     # Пути к файлам запуска
@@ -56,21 +56,29 @@ def generate_launch_description():
         )
     
     # Запуск Gazebo
+    gazebo_world_file = os.path.join(get_package_share_directory(package_name),'worlds','gas_station.world')
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([os.path.join(
             get_package_share_directory('gazebo_ros'), 'launch', 'gazebo.launch.py')]),
             launch_arguments={'world': gazebo_world_file}.items()
     )
    
+    slam_config_file = os.path.join(get_package_share_directory('rover_navigation'), 'config', 'slam.yaml')
+    slam = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([os.path.join(
+            get_package_share_directory('slam_toolbox'), 'launch', 'online_async_launch.py')]),
+            launch_arguments={'params_file': slam_config_file}.items()
+    )
+
     translate = Node(
             package='pointcloud_to_laserscan',
             executable='pointcloud_to_laserscan_node',
             name='pointcloud_to_laserscan',
             parameters=[{
                 'target_frame': 'velodyne',
-                'transform_tolerance': 0.01,
+                'transform_tolerance': 0.1,
                 'min_height': 0.0,  # Lowered to detect ground obstacles
-                'max_height': 10.0,
+                'max_height': 2.0,
                 'angle_min': -1.5708,  # -M_PI/2
                 'angle_max': 1.5708,  # M_PI/2
                 'angle_increment': 0.01745,  # ~1 degree resolution
@@ -145,7 +153,7 @@ def generate_launch_description():
         rsp,
         gazebo,
         spawn_entity,
-        #robot_localization_node,
+        robot_localization_node,
         start_rviz_cmd,
         control_node,
         translate,
@@ -154,4 +162,5 @@ def generate_launch_description():
         delay_joint_broad_spawner,
         #joystick,
         twist_mux,
+        slam
     ])

@@ -1,6 +1,6 @@
 controller_manager:
   ros__parameters:
-    update_rate: 50 # Частота обновления контроллера (Гц)
+    update_rate: 25 # Частота обновления контроллера (Гц)
     use_sim_time: true  # Использование симуляционного времени
 
     # Контроллер для дифференциального привода
@@ -15,14 +15,14 @@ controller_manager:
 diff_cont:
   ros__parameters:
     publish_rate: 50.0  # Частота публикации данных (Гц)
-    odom_frame_id: odom
+    #odom_frame_id: odom
     base_frame_id: root_link  # Фрейм базы робота
     left_wheel_names: ["base_to_l_f_wheel", "base_to_l_m_wheel", "base_to_l_r_wheel"]
     right_wheel_names: ["base_to_r_f_wheel", "base_to_r_m_wheel", "base_to_r_r_wheel"]
     wheel_separation: 0.8  # Расстояние между колесами (м)
     wheel_radius: 0.19  # Радиус колес (м)
     use_stamped_vel: false  # Использование stamped velocity (со временем)
-    wheels_per_side: 3
+    #wheels_per_side: 3
     # Дополнительные параметры (раскомментируйте, если нужно)
     # odom_frame_id: odom  # Фрейм одометрии
     # enable_odom_tf: true  # Включение публикации TF для одометрии

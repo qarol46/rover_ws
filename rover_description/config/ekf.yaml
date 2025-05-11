@@ -3,18 +3,25 @@ ekf_filter_node:
     publish_tf: true
     frequency: 10.0
     # Задержка перед очисткой буфера (сек)
-    tf_timeout: 0.1  
+    tf_timeout: 1.5  
     # Игнорировать небольшие скачки времени
-    tf_time_jump_threshold: 0.5  
+    tf_time_jump_threshold: 0.05  
     #sensor_timeout: 0.1
     two_d_mode: true       # Для наземных роботов (2D)
     
+        #x     , y     , z,
+        #roll  , pitch , yaw,
+        #vx    , vy    , vz,
+        #vroll , vpitch, vyaw,
+        #ax    , ay    , az
+
     # Источник 1: Колёсная одометрия
     odom0: diff_cont/odom     # Топик одометрии
-    odom0_config: [true,   true,   false,  # X, Y позиция (Z отключён)
-                   false,  false,  false,   # Не учитываем yaw, т.к. есть проскальзывание колёс
-                   true,   false,  false,  # Линейная скорость (только X)
-                   false,  false,  true]   # Угловая скорость (только yaw)
+    odom0_config: [false, false, false,
+                   false, false, false,
+                   true, true, false,
+                   false, false, true,
+                   false, false, false]
 
     # Источник 2: IMU
     imu0: /imu        # Топик IMU
@@ -29,6 +36,7 @@ ekf_filter_node:
     #imu0_differential: false   # IMU не дифференциальный
 
     # Фреймы
+    map_frame: map                    # Фрейм карты
     world_frame: odom                 # Глобальный фрейм
     odom_frame: odom                  # Фрейм одометрии
-    base_link_frame: base_footprint   # Базовый фрейм робота
+    base_link_frame: base_link   # Базовый фрейм робота
