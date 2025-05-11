@@ -81,7 +81,7 @@ private:
                        static_cast<double>(recv_msg.angular_vel) / 1000.0);
             
             // Лог сырых данных
-            log_raw_data("Received raw", recv_buffer_);
+            //log_raw_data("Received raw", recv_buffer_);
 
             // Подготовка ответа с пересчитанными данными
             Message send_msg;
@@ -97,7 +97,7 @@ private:
             // Лог сырых данных
             std::array<uint8_t, sizeof(Message)> send_buffer;
             std::memcpy(send_buffer.data(), &send_msg, sizeof(Message));
-            log_raw_data("Sending raw", send_buffer);
+            //log_raw_data("Sending raw", send_buffer);
 
             // Отправка ответа
             socket_.async_send_to(

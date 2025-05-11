@@ -6,6 +6,7 @@
 #include <memory>
 #include <atomic>
 #include <thread>
+#include <mutex>  // Добавляем этот include
 #include <rclcpp/rclcpp.hpp>
 
 class Eth_Socket
@@ -24,6 +25,7 @@ private:
     void handle_receive(const asio::error_code& error, size_t bytes_transferred);
     void start_receive();
     bool first_update_ = true;
+    std::mutex send_mutex_;  // Добавляем мьютекс сюда
 
     asio::io_context io_context_;
     asio::ip::udp::socket socket_;
