@@ -26,15 +26,15 @@ def generate_launch_description():
     #)
 
     #Lead to velodyne queque overload - filter dropping message
-    ekf_config = os.path.join(get_package_share_directory(package_name), 'config', 'ekf.yaml')
-    robot_localization_node = Node(
-        package='robot_localization',
-        executable='ekf_node',
-        name='ekf_filter_node',
-        output='screen',
-        parameters=[ekf_config, {'use_sim_time': True}],
-        #remappings=[('odometry/filtered', 'odom')]  # Перенаправляем выходной топик
-    )
+    #ekf_config = os.path.join(get_package_share_directory(package_name), 'config', 'ekf.yaml')
+    #robot_localization_node = Node(
+    #    package='robot_localization',
+    #    executable='ekf_node',
+    #    name='ekf_filter_node',
+    #    output='screen',
+    #    parameters=[ekf_config, {'use_sim_time': True}],
+    #    #remappings=[('odometry/filtered', 'odom')]  # Перенаправляем выходной топик
+    #)
 
 
     # Пути к файлам запуска
@@ -77,7 +77,7 @@ def generate_launch_description():
             parameters=[{
                 'target_frame': 'velodyne',
                 'transform_tolerance': 0.1,
-                'min_height': 0.0,  # Lowered to detect ground obstacles
+                'min_height': -0.5,  # Lowered to detect ground obstacles
                 'max_height': 2.0,
                 'angle_min': -1.5708,  # -M_PI/2
                 'angle_max': 1.5708,  # M_PI/2
@@ -153,7 +153,7 @@ def generate_launch_description():
         rsp,
         gazebo,
         spawn_entity,
-        robot_localization_node,
+        #robot_localization_node,
         start_rviz_cmd,
         control_node,
         translate,
