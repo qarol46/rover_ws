@@ -37,7 +37,7 @@ amcl:
     z_max: 0.05
     z_rand: 0.5
     z_short: 0.05
-    scan_topic: scan
+    scan_topic: /scan
 
 amcl_map_client:
   ros__parameters:
@@ -147,13 +147,13 @@ controller_server:
 
     # DWB parameters
     FollowPath:
-      plugin: "nav2_rotation_shim_controller::RotationShimController"
-      angular_dist_threshold: 0.785
-      angular_disengage_threshold: 0.3925
-      forward_sampling_distance: 0.5
-      rotate_to_heading_angular_vel: 1.8
-      max_angular_accel: 3.2
-      simulate_ahead_time: 1.0
+      #plugin: "nav2_rotation_shim_controller::RotationShimController"
+      #angular_dist_threshold: 0.785
+      #angular_disengage_threshold: 0.3925
+      #orward_sampling_distance: 0.5
+      #rotate_to_heading_angular_vel: 1.8
+      #max_angular_accel: 3.2
+      #simulate_ahead_time: 1.0
       plugin: "dwb_core::DWBLocalPlanner"
       debug_trajectory_details: True
       min_vel_x: 0.0
@@ -208,7 +208,11 @@ global_costmap:
       publish_frequency: 1.0
       global_frame: map
       robot_base_frame: root_link
-      robot_radius: 1.22 # radius set and used, so no footprint points
+      rolling_window: true
+      width: 3
+      height: 3
+      resolution: 0.05
+      robot_radius: 0.22 # radius set and used, so no footprint points
       resolution: 0.05
       track_unknown_space: true
       plugins: ["static_layer", "obstacle_layer", "voxel_layer", "inflation_layer", "rgbd_obstacle_layer"]
@@ -245,7 +249,7 @@ global_costmap:
         observation_sources: pointcloud
         combination_method: 1
         pointcloud:  # no frame set, uses frame from message
-          topic: /camera/depth/color/points
+          topic: /velodyne_points
           max_obstacle_height: 5.0
           min_obstacle_height: -0.5
           obstacle_max_range: 2.5
@@ -268,48 +272,48 @@ global_costmap:
         cost_scaling_factor: 3.0
         inflate_unknown: false
         inflate_around_unknown: True
-      rgbd_obstacle_layer:
-        plugin: "spatio_temporal_voxel_layer/SpatioTemporalVoxelLayer"
-        enabled:                  true
-        voxel_decay:              15.0  # seconds if linear, e^n if exponential
-        decay_model:              0     # 0=linear, 1=exponential, -1=persistent
-        voxel_size:               0.05  # meters
-        track_unknown_space:      true  # default space is known
-        mark_threshold:           5     # voxel height
-        update_footprint_enabled: true
-        combination_method:       1     # 1=max, 0=override
-        origin_z:                 0.0   # meters
-        publish_voxel_map:        true  # default off
-        transform_tolerance:      0.2   # seconds
-        mapping_mode:             true  # default off, saves map not for navigation
-        map_save_duration:        60.0  # default 60s, how often to autosave
-        observation_sources:      rgbd1_mark rgbd1_clear
-        rgbd1_mark:
-          data_type: PointCloud2
-          topic: /velodyne_points
-          marking: true
-          clearing: false
-          obstacle_range: 3.0          # meters
-          min_obstacle_height: 0.5     # default 0, meters
-          max_obstacle_height: 5.0     # default 3, meters
-          expected_update_rate: 0.0    # default 0, if not updating at this rate at least, remove from buffer
-          observation_persistence: 0.0 # default 0, use all measurements taken during now-value, 0=latest
-          inf_is_valid: false          # default false, for laser scans
-          filter: "voxel"        # default passthrough, apply "voxel", "passthrough", or no filter to sensor data, recommend on     voxel_min_points: 0          # default 0, minimum points per voxel for voxel filter
-          clear_after_reading: true    # default false, clear the buffer after the layer gets readings from it
-        rgbd1_clear:
-          enabled: true                #default true, can be toggled on/off with associated service call
-          data_type: PointCloud2
-          topic: /velodyne_points
-          marking: false
-          clearing: true
-          max_z: 8.0                  # default 0, meters
-          min_z: 1.0                  # default 10, meters
-          vertical_fov_angle: 0.523   # default 0.7, radians. For 3D lidars it's the symmetric FOV about the planar axis.
-          vertical_fov_padding: 0.05    # 3D Lidar only. Default 0, in meters 
-          horizontal_fov_angle: 6.29  # 3D lidar scanners like the VLP16 have 360 deg horizontal FOV.
-          decay_acceleration: 5.0     # default 0, 1/s^2. 
-          model_type: 1               # default 0, model type for frustum. 0=depth camera, 1=3d lidar like VLP16 or similar
+#      rgbd_obstacle_layer:
+#        plugin: "spatio_temporal_voxel_layer/SpatioTemporalVoxelLayer"
+#        enabled:                  true
+#        voxel_decay:              15.0  # seconds if linear, e^n if exponential
+#        decay_model:              0     # 0=linear, 1=exponential, -1=persistent
+#        voxel_size:               0.05  # meters
+#        track_unknown_space:      true  # default space is known
+#        mark_threshold:           5     # voxel height
+#        update_footprint_enabled: true
+#        combination_method:       1     # 1=max, 0=override
+#        origin_z:                 0.0   # meters
+#        publish_voxel_map:        true  # default off
+#        transform_tolerance:      0.2   # seconds
+#        mapping_mode:             true  # default off, saves map not for navigation
+#        map_save_duration:        60.0  # default 60s, how often to autosave
+#        observation_sources:      rgbd1_mark rgbd1_clear
+#        rgbd1_mark:
+#          data_type: PointCloud2
+#          topic: /velodyne_points
+#          marking: true
+#          clearing: false
+#          obstacle_range: 3.0          # meters
+#          min_obstacle_height: 0.5     # default 0, meters
+#          max_obstacle_height: 5.0     # default 3, meters
+#          expected_update_rate: 0.0    # default 0, if not updating at this rate at least, remove from buffer
+#          observation_persistence: 0.0 # default 0, use all measurements taken during now-value, 0=latest
+#          inf_is_valid: false          # default false, for laser scans
+#          filter: "voxel"        # default passthrough, apply "voxel", "passthrough", or no filter to sensor data, recommend on     voxel_min_points: 0          # default 0, minimum points per voxel for voxel filter
+#          clear_after_reading: true    # default false, clear the buffer after the layer gets readings from it
+#        rgbd1_clear:
+#          enabled: true                #default true, can be toggled on/off with associated service call
+#          data_type: PointCloud2
+#          topic: /velodyne_points
+#          marking: false
+#          clearing: true
+#          max_z: 8.0                  # default 0, meters
+#          min_z: 1.0                  # default 10, meters
+#          vertical_fov_angle: 0.523   # default 0.7, radians. For 3D lidars it's the symmetric FOV about the planar axis.
+#          vertical_fov_padding: 0.05    # 3D Lidar only. Default 0, in meters 
+#          horizontal_fov_angle: 6.29  # 3D lidar scanners like the VLP16 have 360 deg horizontal FOV.
+#          decay_acceleration: 5.0     # default 0, 1/s^2. 
+#          model_type: 1               # default 0, model type for frustum. 0=depth camera, 1=3d lidar like VLP16 or similar
       always_send_full_costmap: True
   global_costmap_client:
     ros__parameters:
@@ -365,7 +369,7 @@ local_costmap:
         observation_sources: pointcloud
         combination_method: 1
         pointcloud:  # no frame set, uses frame from message
-          topic: /camera/depth/color/points
+          topic: /velodyne_points
           max_obstacle_height: 5.0
           min_obstacle_height: -0.5
           obstacle_max_range: 2.5
@@ -417,15 +421,19 @@ local_costmap:
           topic: /velodyne_points
           marking: false
           clearing: true
-          max_z: 8.0                  # default 0, meters
-          min_z: 1.0                  # default 10, meters
+          max_z: 5.0                  # default 0, meters
+          min_z: -0.5                  # default 10, meters
           vertical_fov_angle: 0.523   # default 0.7, radians. For 3D lidars it's the symmetric FOV about the planar axis.
           vertical_fov_padding: 0.05    # 3D Lidar only. Default 0, in meters 
           horizontal_fov_angle: 6.29  # 3D lidar scanners like the VLP16 have 360 deg horizontal FOV.
           decay_acceleration: 5.0     # default 0, 1/s^2. 
           model_type: 1               # default 0, model type for frustum. 0=depth camera, 1=3d lidar like VLP16 or similar
       static_layer:
+        plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: True
+        enabled: True
+        subscribe_to_updates: True
+        transform_tolerance: 2.0
       always_send_full_costmap: True
   local_costmap_client:
     ros__parameters:
@@ -463,22 +471,26 @@ planner_server_rclcpp_node:
   ros__parameters:
     use_sim_time: True
 
-recoveries_server:
+behavior_server:
   ros__parameters:
     costmap_topic: local_costmap/costmap_raw
     footprint_topic: local_costmap/published_footprint
     cycle_frequency: 10.0
-    recovery_plugins: ["spin", "backup", "wait"]
+    behavior_plugins: ["spin", "backup", "drive_on_heading", "assisted_teleop", "wait"]
     spin:
-      plugin: "nav2_recoveries/Spin"
+      plugin: "nav2_behaviors/Spin"
     backup:
-      plugin: "nav2_recoveries/BackUp"
+      plugin: "nav2_behaviors/BackUp"
+    drive_on_heading:
+      plugin: "nav2_behaviors/DriveOnHeading"
     wait:
-      plugin: "nav2_recoveries/Wait"
+      plugin: "nav2_behaviors/Wait"
+    assisted_teleop:
+      plugin: "nav2_behaviors/AssistedTeleop"
     global_frame: odom
     robot_base_frame: root_link
-    transform_timeout: 0.1
-    use_sim_time: True
+    transform_tolerance: 0.1
+    use_sim_time: true
     simulate_ahead_time: 2.0
     max_rotational_vel: 1.0
     min_rotational_vel: 0.4

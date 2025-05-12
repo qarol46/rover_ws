@@ -26,15 +26,15 @@ def generate_launch_description():
     #)
 
     #Lead to velodyne queque overload - filter dropping message
-    ekf_config = os.path.join(get_package_share_directory(package_name), 'config', 'ekf.yaml')
-    robot_localization_node = Node(
-        package='robot_localization',
-        executable='ekf_node',
-        name='ekf_filter_node',
-        output='screen',
-        parameters=[ekf_config, {'use_sim_time': True}],
-        remappings=[('odometry/filtered', 'odom')]  # Перенаправляем выходной топик
-    )
+    #ekf_config = os.path.join(get_package_share_directory(package_name), 'config', 'ekf.yaml')
+    #robot_localization_node = Node(
+    #    package='robot_localization',
+    #    executable='ekf_node',
+    #    name='ekf_filter_node',
+    #    output='screen',
+    #    parameters=[ekf_config, {'use_sim_time': True}],
+    #    remappings=[('odometry/filtered', 'odom')]  # Перенаправляем выходной топик
+    #)
 
 
     # Пути к файлам запуска
@@ -109,18 +109,18 @@ def generate_launch_description():
     )
 
     # Запуск Controller Manager
-    control_node = Node(
-        package="controller_manager",
-        executable="ros2_control_node",
-        parameters=[
-            os.path.join(
-                get_package_share_directory(package_name),
-                "config", "my_controllers.yaml"
-            ),
-            {"use_sim_time": True}  # Использование симуляционного времени
-        ],
-        output="screen",
-    )
+    #control_node = Node(
+    #    package="controller_manager",
+    #    executable="ros2_control_node",
+    #    parameters=[
+    #        os.path.join(
+    #            get_package_share_directory(package_name),
+    #            "config", "my_controllers.yaml"
+    #        ),
+    #        {"use_sim_time": True}  # Использование симуляционного времени
+    #    ],
+    #    output="screen",
+    #)
 
     # Загрузка и запуск контроллера для публикации состояний суставов
     joint_broad_spawner = Node(
@@ -157,12 +157,12 @@ def generate_launch_description():
         spawn_entity,
         #robot_localization_node,
         #start_rviz_cmd,
-        control_node,
+        #control_node,
         translate,
         delay_diff_drive_spawner,
         delay_joint_broad_spawner,
         #joystick,
         twist_mux,
-        #slam,
+        slam,
         nav2
     ])
