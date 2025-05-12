@@ -26,15 +26,15 @@ def generate_launch_description():
     #)
 
     #Lead to velodyne queque overload - filter dropping message
-    #ekf_config = os.path.join(get_package_share_directory(package_name), 'config', 'ekf.yaml')
-    #robot_localization_node = Node(
-    #    package='robot_localization',
-    #    executable='ekf_node',
-    #    name='ekf_filter_node',
-    #    output='screen',
-    #    parameters=[ekf_config, {'use_sim_time': True}],
-    #    #remappings=[('odometry/filtered', 'odom')]  # Перенаправляем выходной топик
-    #)
+    ekf_config = os.path.join(get_package_share_directory(package_name), 'config', 'ekf.yaml')
+    robot_localization_node = Node(
+        package='robot_localization',
+        executable='ekf_node',
+        name='ekf_filter_node',
+        output='screen',
+        parameters=[ekf_config, {'use_sim_time': True}],
+        remappings=[('odometry/filtered', 'odom')]  # Перенаправляем выходной топик
+    )
 
 
     # Пути к файлам запуска
@@ -69,7 +69,13 @@ def generate_launch_description():
             get_package_share_directory('slam_toolbox'), 'launch', 'online_async_launch.py')]),
             launch_arguments={'params_file': slam_config_file}.items()
     )
-
+    nav2_config_file = os.path.join(get_package_share_directory('rover_navigation'), 'config', 'navigation_sim.yaml')
+    nav2 = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([os.path.join(
+            get_package_share_directory('rover_navigation'), 'launch', 'navigation.launch.py')]),
+            launch_arguments={'params_file': nav2_config_file}.items()
+    )
+    
     translate = Node(
             package='pointcloud_to_laserscan',
             executable='pointcloud_to_laserscan_node',
@@ -92,11 +98,7 @@ def generate_launch_description():
                 ('/cloud_in', '/velodyne_points'),  # Input pointcloud
                 ('/scan', '/scan') # Output laserscan
             ]
-        )
-    #navigation = IncludeLaunchDescription(
-    #    PythonLaunchDescriptionSource([os.path.join(
-    #        get_package_share_directory('rover_navigation'), 'launch', 'slam.launch.py')])
-    #)
+    )
 
     # Спавн робота в Gazebo
     spawn_entity = Node(
@@ -146,7 +148,7 @@ def generate_launch_description():
         event_handler=OnProcessExit(
             target_action=diff_drive_spawner,
             on_exit=[joint_broad_spawner],
-        )
+       )
     )
 
     return LaunchDescription([
@@ -154,13 +156,13 @@ def generate_launch_description():
         gazebo,
         spawn_entity,
         #robot_localization_node,
-        start_rviz_cmd,
+        #start_rviz_cmd,
         control_node,
         translate,
-        #navigation,
         delay_diff_drive_spawner,
         delay_joint_broad_spawner,
         #joystick,
         twist_mux,
-        slam
+        #slam,
+        nav2
     ])
