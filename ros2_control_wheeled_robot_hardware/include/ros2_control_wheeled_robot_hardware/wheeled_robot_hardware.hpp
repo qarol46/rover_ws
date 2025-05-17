@@ -44,7 +44,7 @@ private:
   double wheel_radius_ = 0.0;
   rclcpp::Time last_successful_comm_;
   bool first_read_ = true;
-  static constexpr double COMM_TIMEOUT = 15.0;
+  static constexpr double COMM_TIMEOUT = 5.0;
   
   rclcpp::Logger logger_;
 };
