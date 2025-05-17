@@ -1,4 +1,3 @@
-// udp_wheeled_robot.hpp
 #ifndef UDP_WHEELED_ROBOT_HPP_
 #define UDP_WHEELED_ROBOT_HPP_
 
@@ -6,8 +5,9 @@
 #include <asio.hpp>
 #include <memory>
 #include <atomic>
-#include <iostream>
 #include <thread>
+#include <mutex>  // Добавляем этот include
+#include <rclcpp/rclcpp.hpp>
 
 class Eth_Socket
 {
@@ -15,15 +15,17 @@ public:
     Eth_Socket();
     ~Eth_Socket();
 
-    bool Initialize(const std::string& ip, int port, int local_port);
+    bool Initialize(const std::string& ip, int server_port, int local_port);
     bool IsValid() const { return socket_.is_open(); }
 
     bool SendWheelSpeeds(const double speeds[2]);
-    bool GetWheelStates(double velocities[6], double positions[6]);  // Updated signature
+    bool GetWheelStates(double velocities[6], double positions[6]);
 
 private:
     void handle_receive(const asio::error_code& error, size_t bytes_transferred);
     void start_receive();
+    bool first_update_ = true;
+    std::mutex send_mutex_;  // Добавляем мьютекс сюда
 
     asio::io_context io_context_;
     asio::ip::udp::socket socket_;
@@ -35,4 +37,4 @@ private:
     std::thread io_thread_;
 };
 
-#endif  // UDP_WHEELED_ROBOT_HPP_
+#endif

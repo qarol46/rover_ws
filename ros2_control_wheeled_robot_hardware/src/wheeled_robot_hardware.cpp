@@ -1,6 +1,4 @@
-// wheeled_robot_hardware.cpp
 #include "ros2_control_wheeled_robot_hardware/wheeled_robot_hardware.hpp"
-#include "rclcpp/clock.hpp"
 #include <chrono>
 #include <cmath>
 #include <limits>
@@ -12,8 +10,7 @@ namespace ros2_control_wheeled_robot_hardware
 {
 
 WheeledRobotHardware::WheeledRobotHardware()
-: logger_(rclcpp::get_logger("WheeledRobotHardware")),
-  clock_(std::make_shared<rclcpp::Clock>(RCL_ROS_TIME))
+: logger_(rclcpp::get_logger("WheeledRobotHardware"))
 {
 }
 
@@ -26,9 +23,8 @@ hardware_interface::CallbackReturn WheeledRobotHardware::on_init(
 
   hw_velocities_.resize(info_.joints.size(), 0.0);
   hw_commands_.resize(info_.joints.size(), 0.0);
-  hw_positions_.resize(info_.joints.size(), 0.0);  // Initialize position storage
+  hw_positions_.resize(info_.joints.size(), 0.0);
 
-  // Validate joint interfaces
   for (const auto & joint : info_.joints) {
     if (joint.command_interfaces.size() != 1 || 
         joint.command_interfaces[0].name != hardware_interface::HW_IF_VELOCITY) {
@@ -38,10 +34,8 @@ hardware_interface::CallbackReturn WheeledRobotHardware::on_init(
     }
 
     bool has_velocity = false;
-    bool has_position = false;
     for (const auto & state_interface : joint.state_interfaces) {
       if (state_interface.name == hardware_interface::HW_IF_VELOCITY) has_velocity = true;
-      if (state_interface.name == hardware_interface::HW_IF_POSITION) has_position = true;
     }
 
     if (!has_velocity) {
@@ -51,7 +45,6 @@ hardware_interface::CallbackReturn WheeledRobotHardware::on_init(
     }
   }
 
-  // Initialize hardware parameters
   try {
     wheel_separation_ = std::stod(info_.hardware_parameters.at("wheel_separation"));
     wheel_radius_ = std::stod(info_.hardware_parameters.at("wheel_radius"));
@@ -64,6 +57,7 @@ hardware_interface::CallbackReturn WheeledRobotHardware::on_init(
     if (!udp_socket_->Initialize(udp_ip, udp_port, local_port)) {
       throw std::runtime_error("Socket initialization failed");
     }
+    socket_connected_ = true;
 
     RCLCPP_INFO(logger_, "Hardware initialized with %zu joints", info_.joints.size());
     RCLCPP_INFO(logger_, "Wheel separation: %.3f m, Wheel radius: %.3f m", 
@@ -88,15 +82,15 @@ WheeledRobotHardware::export_state_interfaces()
         hardware_interface::HW_IF_VELOCITY,
         &hw_velocities_[i]));
         
-    // Add position state interface if it's declared in the URDF
-    for (const auto & state_interface : info_.joints[i].state_interfaces) {
-      if (state_interface.name == hardware_interface::HW_IF_POSITION) {
-        state_interfaces.emplace_back(
-          hardware_interface::StateInterface(
-            info_.joints[i].name,
-            hardware_interface::HW_IF_POSITION,
-            &hw_positions_[i]));
-      }
+    if (std::find_if(info_.joints[i].state_interfaces.begin(),
+                    info_.joints[i].state_interfaces.end(),
+                    [](const auto& si) { return si.name == hardware_interface::HW_IF_POSITION; })
+        != info_.joints[i].state_interfaces.end()) {
+      state_interfaces.emplace_back(
+        hardware_interface::StateInterface(
+          info_.joints[i].name,
+          hardware_interface::HW_IF_POSITION,
+          &hw_positions_[i]));
     }
   }
   return state_interfaces;
@@ -120,8 +114,8 @@ hardware_interface::CallbackReturn WheeledRobotHardware::on_activate(
   const rclcpp_lifecycle::State & )
 {
   RCLCPP_INFO(logger_, "Activating hardware interface");
+  first_read_ = true;
   
-  // Initialize commands with current velocity values
   for (size_t i = 0; i < hw_commands_.size(); ++i) {
     hw_commands_[i] = hw_velocities_[i];
   }
@@ -142,24 +136,35 @@ hardware_interface::CallbackReturn WheeledRobotHardware::on_deactivate(
 }
 
 hardware_interface::return_type WheeledRobotHardware::read(
-  const rclcpp::Time & /*time*/, const rclcpp::Duration & period)
+  const rclcpp::Time & time, const rclcpp::Duration & period)
 {
-  double wheel_velocities[6];
-  double wheel_positions[6];
-  
-  if (!udp_socket_->GetWheelStates(wheel_velocities, wheel_positions)) {
-    RCLCPP_ERROR_THROTTLE(
-      logger_,
-      *clock_,
-      1000, 
-      "Failed to receive wheel states");
+  if (!socket_connected_) {
+    RCLCPP_INFO(logger_, "Socket not connected, skipping read");
+    return hardware_interface::return_type::OK;
   }
 
-  for (size_t i = 0; i < hw_velocities_.size(); ++i) {
-    hw_velocities_[i] = wheel_velocities[i];
+  double wheel_velocities[6] = {0};
+  double wheel_positions[6] = {0};
+  
+  if (udp_socket_->GetWheelStates(wheel_velocities, wheel_positions)) {
+    if (first_read_) {
+      last_successful_comm_ = time;
+      first_read_ = false;
+    }
+
+    for (size_t i = 0; i < hw_velocities_.size(); ++i) {
+      hw_velocities_[i] = wheel_velocities[i];
+      hw_positions_[i] += hw_velocities_[i] * period.seconds();
+    }
     
-    // Integrate velocity to get position (simple Euler integration)
-    hw_positions_[i] += hw_velocities_[i] * period.seconds();
+    last_successful_comm_ = time;
+    RCLCPP_INFO(logger_, "Successfully read wheel states");
+  } else {
+    if (!first_read_ && (time - last_successful_comm_).seconds() > COMM_TIMEOUT) {
+      socket_connected_ = false;
+      RCLCPP_WARN(logger_, "Communication timeout, marking socket as disconnected");
+    }
+    RCLCPP_INFO(logger_, "No new wheel states received");
   }
 
   return hardware_interface::return_type::OK;
@@ -168,11 +173,16 @@ hardware_interface::return_type WheeledRobotHardware::read(
 hardware_interface::return_type WheeledRobotHardware::write(
   const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
-  if (hw_commands_.size() < 2) {
-    return hardware_interface::return_type::ERROR;
+  if (!socket_connected_) {
+    RCLCPP_INFO(logger_, "Socket not connected, skipping write");
+    return hardware_interface::return_type::OK;
   }
 
-  // Calculate average speeds for left and right wheels
+  if (hw_commands_.size() < 2) {
+    RCLCPP_WARN(logger_, "Not enough command interfaces");
+    return hardware_interface::return_type::OK;
+  }
+
   double left_avg = 0.0, right_avg = 0.0;
   size_t left_count = 0, right_count = 0;
 
@@ -189,19 +199,18 @@ hardware_interface::return_type WheeledRobotHardware::write(
   if (left_count > 0) left_avg /= left_count;
   if (right_count > 0) right_avg /= right_count;
 
-  // Convert to linear and angular velocities
   double velocity_command[2] = {
-    (left_avg + right_avg) * wheel_radius_ / 2.0,  // linear (m/s)
-    (right_avg - left_avg) * wheel_radius_ / wheel_separation_  // angular (rad/s)
+    (left_avg + right_avg) * wheel_radius_ / 2.0,
+    (right_avg - left_avg) * wheel_radius_ / wheel_separation_
   };
 
-  if (!udp_socket_->SendWheelSpeeds(velocity_command)) {
-    RCLCPP_ERROR_THROTTLE(
-      logger_,
-      *clock_,
-      1000,
-      "Failed to send wheel speeds");
-  }
+  RCLCPP_DEBUG(logger_, 
+              "Calculated commands: left=%.2f, right=%.2f, lin=%.3f, ang=%.3f",
+              left_avg, right_avg, velocity_command[0], velocity_command[1]);
+
+  // Отправляем команды (результат игнорируем)
+  udp_socket_->SendWheelSpeeds(velocity_command);
+  
   return hardware_interface::return_type::OK;
 }
 

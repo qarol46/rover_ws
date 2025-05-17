@@ -19,16 +19,13 @@ struct Message {
     uint8_t null_array_3[23];
     uint8_t sender_addres;
 
-    // Конструктор с инициализацией
-    Message() : 
-        number_device(0x23),
-        operating_mode(0x01),
-        work_device(0x00),
-        linear_vel(0),
-        angular_vel(0),
-        sender_addres(0xAA) 
-    {
-        // Обнуляем массивы
+    Message() 
+        : number_device(0x23),
+          operating_mode(0x01),
+          work_device(0x00),
+          linear_vel(0),
+          angular_vel(0),
+          sender_addres(0xAA) {
         memset(null_array_1, 0, sizeof(null_array_1));
         memset(null_array_2, 0, sizeof(null_array_2));
         memset(torque, 0, sizeof(torque));
