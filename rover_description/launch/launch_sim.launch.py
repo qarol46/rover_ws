@@ -110,18 +110,18 @@ def generate_launch_description():
     )
 
     # Запуск Controller Manager
-    #control_node = Node(
-    #    package="controller_manager",
-    #    executable="ros2_control_node",
-    #    parameters=[
-    #        os.path.join(
-    #            get_package_share_directory(package_name),
-    #            "config", "my_controllers.yaml"
-    #        ),
-    #        {"use_sim_time": True}  # Использование симуляционного времени
-    #    ],
-    #    output="screen",
-    #)
+    control_node = Node(
+        package="controller_manager",
+        executable="ros2_control_node",
+        parameters=[
+            os.path.join(
+                get_package_share_directory(package_name),
+                "config", "my_controllers.yaml"
+            ),
+            {"use_sim_time": True}  # Использование симуляционного времени
+        ],
+        output="screen",
+    )
 
     # Загрузка и запуск контроллера для публикации состояний суставов
     joint_broad_spawner = Node(
@@ -140,14 +140,14 @@ def generate_launch_description():
     # Задержка запуска контроллеров после спавна робота
     delay_diff_drive_spawner = RegisterEventHandler(
         event_handler=OnProcessExit(
-            target_action=spawn_entity,
+            target_action=control_node,
             on_exit=[diff_drive_spawner],
         )
     )
 
     delay_joint_broad_spawner = RegisterEventHandler(
         event_handler=OnProcessExit(
-            target_action=diff_drive_spawner,
+            target_action=control_node,
             on_exit=[joint_broad_spawner],
        )
     )
@@ -155,14 +155,15 @@ def generate_launch_description():
     return LaunchDescription([
         rsp,
         gazebo,
+        control_node,
+        delay_diff_drive_spawner,
+        delay_joint_broad_spawner,
         spawn_entity,
         #robot_localization_node,
         #start_rviz_cmd,
-        #control_node,
-        translate,
-        delay_diff_drive_spawner,
-        delay_joint_broad_spawner,
+        
         #joystick,
+        translate,
         twist_mux,
         slam,
         nav2
