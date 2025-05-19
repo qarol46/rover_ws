@@ -50,13 +50,13 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument(
             name='sim', 
-            default_value='true',
+            default_value='false',
             description='Enable use_sime_time to true'
         ),
 
         DeclareLaunchArgument(
             name='rviz', 
-            default_value='true',
+            default_value='false',
             description='Run rviz'
         ),
 

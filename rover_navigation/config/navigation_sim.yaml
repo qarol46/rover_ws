@@ -150,7 +150,7 @@ controller_server:
       #plugin: "nav2_rotation_shim_controller::RotationShimController"
       #angular_dist_threshold: 0.785
       #angular_disengage_threshold: 0.3925
-      #orward_sampling_distance: 0.5
+      #forward_sampling_distance: 0.5
       #rotate_to_heading_angular_vel: 1.8
       #max_angular_accel: 3.2
       #simulate_ahead_time: 1.0

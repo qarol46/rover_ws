@@ -35,7 +35,7 @@ def generate_launch_description():
     #            )]), launch_arguments={'use_sim_time': 'true'}.items()
     #)
 
-    rviz_config_file = os.path.join(get_package_share_directory(package_name), 'config', 'rviz_config.rviz')
+    rviz_config_file = os.path.join(get_package_share_directory("rover_navigation"), 'rviz', 'rover_navigation.rviz')
     start_rviz_cmd = Node(
         package='rviz2',
         executable='rviz2',
@@ -47,7 +47,7 @@ def generate_launch_description():
     twist_mux = Node(
             package="twist_mux",
             executable="twist_mux",
-            parameters=[twist_mux_params, {'use_sim_time': True}],
+            parameters=[twist_mux_params, {'use_sim_time': False}],
             remappings=[('/cmd_vel_out','/diff_cont/cmd_vel_unstamped')]
         )
 
@@ -81,7 +81,43 @@ def generate_launch_description():
             on_start=[joint_broad_spawner],
         )
     )
-
+    
+    slam_config_file = os.path.join(get_package_share_directory('rover_navigation'), 'config', 'slam.yaml')
+    slam = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([os.path.join(
+            get_package_share_directory('slam_toolbox'), 'launch', 'online_async_launch.py')]),
+            launch_arguments={'params_file': slam_config_file}.items()
+    )
+    nav2_config_file = os.path.join(get_package_share_directory('rover_navigation'), 'config', 'navigation.yaml')
+    nav2 = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([os.path.join(
+            get_package_share_directory('rover_navigation'), 'launch', 'navigation.launch.py')]),
+            launch_arguments={'params_file': nav2_config_file}.items()
+    )
+    
+    translate = Node(
+            package='pointcloud_to_laserscan',
+            executable='pointcloud_to_laserscan_node',
+            name='pointcloud_to_laserscan',
+            parameters=[{
+                'target_frame': 'velodyne',
+                'transform_tolerance': 0.1,
+                'min_height': -0.5,  # Lowered to detect ground obstacles
+                'max_height': 2.0,
+                'angle_min': -1.5708,  # -M_PI/2
+                'angle_max': 1.5708,  # M_PI/2
+                'angle_increment': 0.01745,  # ~1 degree resolution
+                'scan_time': 0.01,
+                'range_min': 0.9,
+                'range_max': 30.0,
+                'use_inf': True,
+                'inf_epsilon': 1.0
+            }],
+            remappings=[
+                ('/cloud_in', '/velodyne_points'),  # Input pointcloud
+                ('/scan', '/scan') # Output laserscan
+            ]
+    )
     return LaunchDescription([
         rsp,
         start_rviz_cmd,
@@ -90,4 +126,7 @@ def generate_launch_description():
         delay_joint_broad_spawner,
         #joystick,
         twist_mux,
+        slam,
+        nav2,
+        translate
     ])
