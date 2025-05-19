@@ -3,7 +3,7 @@
 
   <!-- Включение файлов -->
   <xacro:include filename="chassis.xacro"/>
-  <xacro:include filename="ros2_control.xacro"/>
+  <xacro:include filename="gazebo_control.xacro"/>
   <xacro:include filename="imu.xacro"/>
   
   <xacro:include filename="$(find velodyne_description)/urdf/VLP-16.urdf.xacro"/>
@@ -17,7 +17,9 @@
   <xacro:include filename="$(find realsense2_description)/urdf/_d415.urdf.xacro"/>
   
   <xacro:include filename="depth_camera.xacro"/>
-  <xacro:include filename="gazebo_control.xacro"/>-->
+  <xacro:include filename="gazebo_control.xacro"/>
+  <xacro:include filename="ros2_control.xacro"/>
+  -->
   
   <!--xacro:include filename="camera.xacro"/-->
   
