@@ -161,7 +161,6 @@ def generate_launch_description():
         spawn_entity,
         #robot_localization_node,
         #start_rviz_cmd,
-        
         #joystick,
         translate,
         twist_mux,
