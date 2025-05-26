@@ -117,11 +117,11 @@ bool Eth_Socket::GetWheelStates(double velocities[6], double positions[6]) {
     for (int i = 0; i < 6; ++i) {
         // Velocity from rpm to rad/s
         velocities[i] = (1.0f / (8.74f * reduction * 9.548f)) * 
-                       static_cast<double>(ntohs(last_received_msg_.velocity[i]));
+                       static_cast<double>(last_received_msg_.velocity[i]);
         
         // Position from encoder ticks to radians
         positions[i] = (2.0 * M_PI / (8.0 * reduction)) * 
-                      static_cast<double>(ntohs(last_received_msg_.odom[i]));
+                      static_cast<double>(last_received_msg_.odom[i]);
     }
 
     RCLCPP_DEBUG(rclcpp::get_logger("Eth_Socket"), 

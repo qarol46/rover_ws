@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<library path="gazebo_wheeled_robot_control">
+  <class 
+    name="gazebo_ros_control/GazeboWheeledRobotHardware"
+    type="gazebo_ros_control::GazeboWheeledRobotHardware"
+    base_class_type="hardware_interface::SystemInterface">
+    <description>
+      Gazebo hardware interface for wheeled robot control
+    </description>
+  </class>
+</library>
