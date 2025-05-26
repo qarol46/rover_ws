@@ -17,7 +17,7 @@ def generate_launch_description():
     rsp = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([os.path.join(
             get_package_share_directory(package_name), 'launch', 'rsp.launch.py'
-        )]), launch_arguments={'use_sim_time': 'true', 'use_ros2_control': 'true'}.items()
+        )]), launch_arguments={'use_sim_time': 'true', 'use_ros2_control': 'false'}.items()
     )
     
     #joystick = IncludeLaunchDescription(
@@ -118,7 +118,7 @@ def generate_launch_description():
                 get_package_share_directory(package_name),
                 "config", "my_controllers.yaml"
             ),
-            {"use_sim_time": True}  # Использование симуляционного времени
+           {"use_sim_time": True}  # Использование симуляционного времени
         ],
         output="screen",
     )
@@ -155,13 +155,12 @@ def generate_launch_description():
     return LaunchDescription([
         rsp,
         gazebo,
-        control_node,
+        #control_node,
         delay_diff_drive_spawner,
         delay_joint_broad_spawner,
         spawn_entity,
         #robot_localization_node,
         #start_rviz_cmd,
-        
         #joystick,
         translate,
         twist_mux,
