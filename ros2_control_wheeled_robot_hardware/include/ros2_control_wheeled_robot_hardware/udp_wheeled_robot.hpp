@@ -24,7 +24,7 @@ public:
 private:
     void handle_receive(const asio::error_code& error, size_t bytes_transferred);
     void start_receive();
-    bool first_update_ = true; //для эхо-сервера поставить true
+    bool first_update_ = false; //для эхо-сервера поставить true
     std::mutex send_mutex_;  // Добавляем мьютекс сюда
 
     asio::io_context io_context_;
