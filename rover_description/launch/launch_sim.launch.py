@@ -17,7 +17,7 @@ def generate_launch_description():
     rsp = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([os.path.join(
             get_package_share_directory(package_name), 'launch', 'rsp.launch.py'
-        )]), launch_arguments={'use_sim_time': 'true', 'use_ros2_control': 'false'}.items()
+        )]), launch_arguments={'use_sim_time': 'true', 'use_ros2_control': 'true'}.items()
     )
     
     #joystick = IncludeLaunchDescription(
@@ -91,7 +91,7 @@ def generate_launch_description():
                 'angle_increment': 0.01745,  # ~1 degree resolution
                 'scan_time': 0.01,
                 'range_min': 0.9,
-                'range_max': 30.0,
+                'range_max': 5.0,
                 'use_inf': True,
                 'inf_epsilon': 1.0
             }],
@@ -155,15 +155,15 @@ def generate_launch_description():
     return LaunchDescription([
         rsp,
         gazebo,
-        #control_node,
+        control_node,
         delay_diff_drive_spawner,
         delay_joint_broad_spawner,
         spawn_entity,
         #robot_localization_node,
         #start_rviz_cmd,
         #joystick,
-        translate,
         twist_mux,
+        translate,
         slam,
         nav2
     ])
