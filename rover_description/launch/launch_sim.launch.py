@@ -91,7 +91,7 @@ def generate_launch_description():
                 'angle_increment': 0.01745,  # ~1 degree resolution
                 'scan_time': 0.01,
                 'range_min': 0.9,
-                'range_max': 30.0,
+                'range_max': 5.0,
                 'use_inf': True,
                 'inf_epsilon': 1.0
             }],
@@ -118,7 +118,7 @@ def generate_launch_description():
                 get_package_share_directory(package_name),
                 "config", "my_controllers.yaml"
             ),
-            {"use_sim_time": True}  # Использование симуляционного времени
+           {"use_sim_time": True}  # Использование симуляционного времени
         ],
         output="screen",
     )
@@ -161,10 +161,9 @@ def generate_launch_description():
         spawn_entity,
         #robot_localization_node,
         #start_rviz_cmd,
-        
         #joystick,
-        translate,
         twist_mux,
+        translate,
         slam,
         nav2
     ])

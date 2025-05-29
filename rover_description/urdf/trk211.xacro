@@ -7,10 +7,21 @@
   <xacro:include filename="imu.xacro"/>
   
   <xacro:include filename="$(find velodyne_description)/urdf/VLP-16.urdf.xacro"/>
-  <xacro:VLP-16 parent="visionbox_link" name="velodyne"
-          topic="/velodyne_points"
-          hz="10" samples="400" gpu="true" min_range="0.1" min_angle="-${pi/2}" max_angle="${pi/2}">
-    <origin xyz="0 0 ${visionbox_link_height/2}" rpy="0 0 0" />
+  <xacro:VLP-16 parent="visionbox_link" 
+                name="velodyne" 
+                topic="/velodyne_points" 
+                organize_cloud="false" 
+                hz="5" 
+                lasers="8" 
+                samples="200" 
+                collision_range="0.3" 
+                min_range="0.9" 
+                max_range="5.0" 
+                noise="0.0"   
+                min_angle="-${pi/2}" 
+                max_angle="${pi/2}" 
+                gpu="false">
+                <origin xyz="0 0 ${visionbox_link_height/2}" rpy="0 0 0" />
   </xacro:VLP-16>
 
   <!--
