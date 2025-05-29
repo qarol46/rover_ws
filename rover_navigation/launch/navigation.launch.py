@@ -14,6 +14,7 @@
 
 import os
 from launch import LaunchDescription
+from ament_index_python.packages import get_package_share_directory
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch.launch_description_sources import PythonLaunchDescriptionSource
@@ -47,6 +48,37 @@ def generate_launch_description():
         [FindPackageShare(package_name), 'config', 'navigation_sim.yaml']
     )
 
+    slam_config_file = os.path.join(get_package_share_directory('rover_navigation'), 'config', 'slam.yaml')
+    slam = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([os.path.join(
+            get_package_share_directory('slam_toolbox'), 'launch', 'online_async_launch.py')]),
+            launch_arguments={'use_sim_time': LaunchConfiguration("sim"), 'params_file': slam_config_file}.items()
+    )
+
+    translate = Node(
+            package='pointcloud_to_laserscan',
+            executable='pointcloud_to_laserscan_node',
+            name='pointcloud_to_laserscan',
+            parameters=[{
+                'target_frame': 'velodyne',
+                'transform_tolerance': 0.1,
+                'min_height': -0.5,  # Lowered to detect ground obstacles
+                'max_height': 2.0,
+                'angle_min': -1.5708,  # -M_PI/2
+                'angle_max': 1.5708,  # M_PI/2
+                'angle_increment': 0.01745,  # ~1 degree resolution
+                'scan_time': 0.01,
+                'range_min': 0.9,
+                'range_max': 5.0,
+                'use_inf': True,
+                'inf_epsilon': 1.0
+            }],
+            remappings=[
+                ('/cloud_in', '/velodyne_points'),  # Input pointcloud
+                ('/scan', '/scan') # Output laserscan
+            ]
+    )
+
     return LaunchDescription([
         DeclareLaunchArgument(
             name='sim', 
@@ -56,7 +88,7 @@ def generate_launch_description():
 
         DeclareLaunchArgument(
             name='rviz', 
-            default_value='false',
+            default_value='true',
             description='Run rviz'
         ),
 
@@ -65,6 +97,10 @@ def generate_launch_description():
     #         default_value=default_map_path,
     #         description='Navigation map path'
     #     ),
+
+        translate,
+
+        slam,
 
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(nav2_launch_path),
@@ -91,7 +127,7 @@ def generate_launch_description():
             executable='rviz2',
             name='rviz2',
             output='screen',
-            #arguments=['-d', rviz_config_path],
+            arguments=['-d', rviz_config_path],
             condition=IfCondition(LaunchConfiguration("rviz")),
             parameters=[{'use_sim_time': LaunchConfiguration("sim")}]
         )
