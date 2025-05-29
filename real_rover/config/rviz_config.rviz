@@ -144,30 +144,29 @@ Visualization Manager:
       Show Names: false
       Tree:
         odom:
-          {}
-        root_link:
-          base_footprint:
-            {}
-          base_link:
-            ctrlbox_link:
-              front_camera_link:
+          root_link:
+            base_footprint:
+              {}
+            base_link:
+              ctrlbox_link:
+                front_camera_link:
+                  {}
+                gps_link:
+                  {}
+                visionbox_link:
+                  {}
+              left_forward_wheel:
                 {}
-              gps_link:
+              left_middle_wheel:
                 {}
-              visionbox_link:
+              left_rear_wheel:
                 {}
-            left_forward_wheel:
-              {}
-            left_middle_wheel:
-              {}
-            left_rear_wheel:
-              {}
-            right_forward_wheel:
-              {}
-            right_middle_wheel:
-              {}
-            right_rear_wheel:
-              {}
+              right_forward_wheel:
+                {}
+              right_middle_wheel:
+                {}
+              right_rear_wheel:
+                {}
       Update Interval: 0
       Value: true
     - Alpha: 0.5

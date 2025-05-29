@@ -153,7 +153,12 @@ hardware_interface::return_type WheeledRobotHardware::read(
     }
 
     for (size_t i = 0; i < hw_velocities_.size(); ++i) {
-      hw_velocities_[i] = wheel_velocities[i];
+      // Инвертируем знак для правых колес
+      if (info_.joints[i].name.find("right") != std::string::npos) {
+        hw_velocities_[i] = -wheel_velocities[i];  // Добавляем минус для правых колес
+      } else {
+        hw_velocities_[i] = wheel_velocities[i];
+      }
       hw_positions_[i] += hw_velocities_[i] * period.seconds();
     }
     
