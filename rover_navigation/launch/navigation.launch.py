@@ -88,7 +88,7 @@ def generate_launch_description():
 
         DeclareLaunchArgument(
             name='rviz', 
-            default_value='true',
+            default_value='false',
             description='Run rviz'
         ),
 
