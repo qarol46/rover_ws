@@ -28,16 +28,16 @@ package_name = 'rover_navigation'
 def generate_launch_description():
 
     nav2_launch_path = PathJoinSubstitution(
-        [FindPackageShare('nav2_bringup'), 'launch', 'bringup_launch.py']
+        [FindPackageShare('nav2_bringup'), 'launch', 'navigation_launch.py']
     )
 
     rviz_config_path = PathJoinSubstitution(
         [FindPackageShare(package_name), 'rviz', 'rover_navigation.rviz']
     )
 
-    default_map_path = PathJoinSubstitution(
-        [FindPackageShare(package_name), 'maps', f'{MAP_NAME}.yaml']
-    )
+    # default_map_path = PathJoinSubstitution(
+    #     [FindPackageShare(package_name), 'maps', f'{MAP_NAME}.yaml']
+    # )
 
     nav2_config_path = PathJoinSubstitution(
         [FindPackageShare(package_name), 'config', 'navigation.yaml']
@@ -60,17 +60,17 @@ def generate_launch_description():
             description='Run rviz'
         ),
 
-       DeclareLaunchArgument(
-            name='map', 
-            default_value=default_map_path,
-            description='Navigation map path'
-        ),
+    #    DeclareLaunchArgument(
+    #         name='map', 
+    #         default_value=default_map_path,
+    #         description='Navigation map path'
+    #     ),
 
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(nav2_launch_path),
             condition=UnlessCondition(LaunchConfiguration("sim")),
             launch_arguments={
-                'map': LaunchConfiguration("map"),
+                #'map': LaunchConfiguration("map"),
                 'use_sim_time': LaunchConfiguration("sim"),
                 'params_file': nav2_config_path
             }.items()
@@ -80,7 +80,7 @@ def generate_launch_description():
             PythonLaunchDescriptionSource(nav2_launch_path),
             condition=IfCondition(LaunchConfiguration("sim")),
             launch_arguments={
-                'map': LaunchConfiguration("map"),
+                #'map': LaunchConfiguration("map"),
                 'use_sim_time': LaunchConfiguration("sim"),
                 'params_file': nav2_sim_config_path
             }.items()
@@ -91,7 +91,7 @@ def generate_launch_description():
             executable='rviz2',
             name='rviz2',
             output='screen',
-            arguments=['-d', rviz_config_path],
+            #arguments=['-d', rviz_config_path],
             condition=IfCondition(LaunchConfiguration("rviz")),
             parameters=[{'use_sim_time': LaunchConfiguration("sim")}]
         )
