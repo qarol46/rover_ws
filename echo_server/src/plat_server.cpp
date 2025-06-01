@@ -150,12 +150,19 @@ private:
 
         // Рассчитываем скорость для каждого колеса
         for (int i = 0; i < 6; i++) {
+            // Объявляем переменную перед использованием
+            float wheel_rpm;
+        
             // Моделируем скорость колеса (линейная + угловая компоненты)
-            float wheel_rpm = linear_rpm + ((i % 2 == 0) ? -1 : 1) * angular_rpm * 0.5f;
-            
+            if(i % 2 == 0) {
+                wheel_rpm = linear_rpm - angular_rpm * 0.5f;
+            } else {
+                wheel_rpm = -(linear_rpm + angular_rpm * 0.5f);
+            }
+        
             // Преобразуем RPM в raw значение (как в клиенте)
             output.velocity[i] = static_cast<int16_t>(wheel_rpm * 8.74f * 9.548f * reduction);
-            
+        
             // Обновляем одометрию (имитация энкодера)
             static int32_t odom_counter[6] = {0};
             odom_counter[i] += static_cast<int32_t>(output.velocity[i] * 0.1f); // Интегрируем скорость

@@ -126,7 +126,7 @@ def generate_launch_description():
         delay_joint_broad_spawner,
         #joystick,
         twist_mux,
-        slam,
-        nav2,
+        #slam,
+        #nav2,
         translate
     ])
