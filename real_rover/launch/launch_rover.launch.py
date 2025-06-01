@@ -1,5 +1,6 @@
 import os
-from ament_index_python.packages import get_package_share_directory
+import yaml
+from ament_index_python.packages import get_package_share_directory, get_package_share_path
 from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription, RegisterEventHandler, TimerAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
@@ -82,6 +83,46 @@ def generate_launch_description():
         )
     )
     
+    # I prefer to use singe launch file for project, so
+    # teleop_launch = IncludeLaunchDescription(
+    #     PythonLaunchDescriptionSource([os.path.join(
+    #         get_package_share_directory('real_rover'), 'launch', 'teleop.launch.py')])   
+    # )
+
+
+    # Initializing LIDAR - set here for debugging cause there is no nedd to drive robot
+
+    # Firstly point config file and start driver 
+    lidar_parameters_file= os.path.join(get_package_share_directory("real_rover"), 'config', 'VLP16-velodyne_driver_node-params.yaml')
+    VLP_driver= Node(
+        package='velodyne_driver',
+        executable='velodyne_driver_node',
+        output='both',
+        parameters=[lidar_parameters_file]
+    )
+    # Secondly start trasform node using original launch file of veodyne project
+    convert_share_dir = get_package_share_path('velodyne_pointcloud')
+    convert_params_file = os.path.join(get_package_share_directory('velodyne_pointcloud'), 'config', 'VLP16-velodyne_transform_node-params.yaml')
+    with open(str(convert_params_file), 'r') as f:
+        convert_params = yaml.safe_load(f)['velodyne_transform_node']['ros__parameters']
+    convert_params['calibration'] = str(convert_share_dir / 'params' / 'VLP16db.yaml')
+    VLP_pointcloud = Node(
+        package='velodyne_pointcloud',
+        executable='velodyne_transform_node',
+        output='both',
+        parameters=[convert_params]
+    )
+
+    # This block might be used to also convert VLP raw data to /sensor_msg/laserscan but we use translate node for this purpose
+
+    # laserscan_params_file = get_package_share_path('velodyne_laserscan') / 'config' / 'default-velodyne_laserscan_node-params.yaml'
+    # ld.add_action(Node(
+    #     package='velodyne_laserscan',
+    #     executable='velodyne_laserscan_node',
+    #     output='both',
+    #     parameters=[laserscan_params_file]
+    # ))
+
     slam_config_file = os.path.join(get_package_share_directory('rover_navigation'), 'config', 'slam.yaml')
     slam = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([os.path.join(
@@ -100,7 +141,7 @@ def generate_launch_description():
             executable='pointcloud_to_laserscan_node',
             name='pointcloud_to_laserscan',
             parameters=[{
-                'target_frame': 'velodyne',
+                'target_frame': 'laserscan',
                 'transform_tolerance': 0.1,
                 'min_height': -0.5,  # Lowered to detect ground obstacles
                 'max_height': 2.0,
@@ -126,7 +167,9 @@ def generate_launch_description():
         delay_joint_broad_spawner,
         #joystick,
         twist_mux,
-        slam,
-        nav2,
-        translate
+        VLP_driver,
+        VLP_pointcloud,
+        #translate,
+        #slam,
+        #nav2
     ])
