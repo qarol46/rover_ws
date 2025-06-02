@@ -150,6 +150,8 @@ def generate_launch_description():
                 'qos_overrides./scan.publisher.durability': 'volatile',
                 'qos_overrides./scan.publisher.history': 'keep_last',
                 'qos_overrides./scan.publisher.depth': 10,
+                'use_sim_time': False,  # Explicitly set
+                'allow_undeclared_parameters': False,
                 #'target_frame': 'laserscan',
                 'transform_tolerance': 0.01,
                 'min_height': -0.5,  # Lowered to detect ground obstacles
