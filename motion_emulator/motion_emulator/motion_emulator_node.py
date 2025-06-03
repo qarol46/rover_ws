@@ -13,7 +13,7 @@ class MotionEmulator(Node):
         
         # Параметры движения с значениями по умолчанию
         self.declare_parameter('linear_speed', 0.3)  # м/с
-        self.declare_parameter('angular_speed', 0.3)  # рад/с
+        self.declare_parameter('angular_speed', 0.15)  # рад/с
         self.declare_parameter('position_tolerance', 0.05)  # м
         self.declare_parameter('angle_tolerance', 0.05)  # рад
         
