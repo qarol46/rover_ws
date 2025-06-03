@@ -123,48 +123,50 @@ def generate_launch_description():
     #     parameters=[laserscan_params_file]
     # ))
 
-    slam_config_file = os.path.join(get_package_share_directory('rover_navigation'), 'config', 'slam.yaml')
-    slam = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource([os.path.join(
-            get_package_share_directory('slam_toolbox'), 'launch', 'online_async_launch.py')]),
-            launch_arguments={'params_file': slam_config_file}.items()
-    )
-    nav2_config_file = os.path.join(get_package_share_directory('rover_navigation'), 'config', 'navigation.yaml')
+    # slam_config_file = os.path.join(get_package_share_directory('rover_navigation'), 'config', 'slam.yaml')
+    # slam = IncludeLaunchDescription(
+    #     PythonLaunchDescriptionSource([os.path.join(
+    #         get_package_share_directory('slam_toolbox'), 'launch', 'online_async_launch.py')]),
+    #         launch_arguments={'params_file': slam_config_file}.items()
+    # )
+    #nav2_config_file = os.path.join(get_package_share_directory('rover_navigation'), 'config', 'navigation.yaml')
     nav2 = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([os.path.join(
-            get_package_share_directory('rover_navigation'), 'launch', 'navigation.launch.py')]),
-            launch_arguments={'params_file': nav2_config_file}.items()
+            get_package_share_directory('rover_navigation'), 'launch', 'navigation.launch.py')])
+            #launch_arguments={'params_file': nav2_config_file}.items()
     )
     
-    translate = Node(
-            package='pointcloud_to_laserscan',
-            executable='pointcloud_to_laserscan_node',
-            name='pointcloud_to_laserscan',
-            remappings=[
-                ('/cloud_in', '/velodyne_points'),  # Input pointcloud
-                ('/scan', '/scan') # Output laserscan
-            ],
-            parameters=[{
-                # CRITICAL FIX: Override QoS to match RViz2 requirements
-                'qos_overrides./scan.publisher.reliability': 'reliable',  # Force RELIABLE
-                'qos_overrides./scan.publisher.durability': 'volatile',
-                'qos_overrides./scan.publisher.history': 'keep_last',
-                'qos_overrides./scan.publisher.depth': 10,
-                #'target_frame': 'laserscan',
-                'transform_tolerance': 0.01,
-                'min_height': -0.5,  # Lowered to detect ground obstacles
-                'max_height': 2.0,
-                'angle_min': -1.5708,  # -M_PI/2
-                'angle_max': 1.5708,  # M_PI/2
-                'angle_increment': 0.01745,  # ~1 degree resolution
-                'scan_time': 0.01,
-                'range_min': 0.9,
-                'range_max': 30.0,
-                'use_inf': True,
-                'inf_epsilon': 1.0
-            }]
+    # translate = Node(
+    #         package='pointcloud_to_laserscan',
+    #         executable='pointcloud_to_laserscan_node',
+    #         name='pointcloud_to_laserscan',
+    #         remappings=[
+    #             ('/cloud_in', '/velodyne_points'),  # Input pointcloud
+    #             ('/scan', '/scan') # Output laserscan
+    #         ],
+    #         parameters=[{
+    #             # CRITICAL FIX: Override QoS to match RViz2 requirements
+    #             'qos_overrides./scan.publisher.reliability': 'reliable',  # Force RELIABLE
+    #             'qos_overrides./scan.publisher.durability': 'volatile',
+    #             'qos_overrides./scan.publisher.history': 'keep_last',
+    #             'qos_overrides./scan.publisher.depth': 10,
+    #             'use_sim_time': False,  # Explicitly set
+    #             'allow_undeclared_parameters': False,
+    #             #'target_frame': 'laserscan',
+    #             'transform_tolerance': 0.01,
+    #             'min_height': -0.5,  # Lowered to detect ground obstacles
+    #             'max_height': 2.0,
+    #             'angle_min': -1.5708,  # -M_PI/2
+    #             'angle_max': 1.5708,  # M_PI/2
+    #             'angle_increment': 0.01745,  # ~1 degree resolution
+    #             'scan_time': 0.01,
+    #             'range_min': 0.9,
+    #             'range_max': 30.0,
+    #             'use_inf': True,
+    #             'inf_epsilon': 1.0
+    #         }]
             
-    )
+    # )
     return LaunchDescription([
         rsp,
         start_rviz_cmd,
