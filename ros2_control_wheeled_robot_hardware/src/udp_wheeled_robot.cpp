@@ -8,8 +8,8 @@
 
 // Константы из trk211_ethernet.cpp
 constexpr float reduction = 58.64;  // Передаточное число редуктора
-constexpr float wheel_radius = 0.19;  // Радиус колеса в метрах
-constexpr float track = 0.8;  // Колея робота
+constexpr float wheel_radius = 0.23;  // Радиус колеса в метрах
+constexpr float track = 0.9;  // Колея робота
 
 Eth_Socket::Eth_Socket() : socket_(io_context_) {
     RCLCPP_DEBUG(rclcpp::get_logger("Eth_Socket"), "Socket created");
