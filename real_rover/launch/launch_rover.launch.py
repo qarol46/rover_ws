@@ -167,15 +167,15 @@ def generate_launch_description():
     )
     return LaunchDescription([
         rsp,
-        #start_rviz_cmd,
+        start_rviz_cmd,
         delay_controller_manager,
         delay_diff_drive_spawner,
         delay_joint_broad_spawner,
         #joystick,
         twist_mux,
-        VLP_driver,
-        VLP_pointcloud,
-        translate,
-        slam,
-        nav2
+        #VLP_driver,
+        #VLP_pointcloud,
+        #translate,
+        #slam,
+        #nav2
     ])
