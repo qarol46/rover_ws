@@ -160,7 +160,7 @@ def generate_launch_description():
         delay_joint_broad_spawner,
         spawn_entity,
         #robot_localization_node,
-        start_rviz_cmd,
+        #start_rviz_cmd,
         #joystick,
         twist_mux,
         translate,
