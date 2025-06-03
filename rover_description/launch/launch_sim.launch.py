@@ -82,8 +82,8 @@ def generate_launch_description():
             executable='pointcloud_to_laserscan_node',
             name='pointcloud_to_laserscan',
             parameters=[{
-                'target_frame': 'velodyne',
-                'transform_tolerance': 0.1,
+                #'target_frame': 'velodyne',
+                #'transform_tolerance': 0.1,
                 'min_height': -0.5,  # Lowered to detect ground obstacles
                 'max_height': 2.0,
                 'angle_min': -1.5708,  # -M_PI/2
