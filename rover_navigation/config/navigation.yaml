@@ -300,7 +300,7 @@ global_costmap:
         map_subscribe_transient_local: True
         enabled: True
         subscribe_to_updates: True
-        transform_tolerance: 2.0
+        transform_tolerance: 0.5
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         enabled: True
@@ -373,8 +373,8 @@ local_costmap:
         update_footprint_enabled: true
         combination_method:       1     # 1=max, 0=override
         origin_z:                 0.0   # meters
-        publish_voxel_map:        false # default off
-        transform_tolerance:      0.2   # seconds
+        publish_voxel_map:        true # default off
+        transform_tolerance:      0.5   # seconds
         mapping_mode:             false # default off, saves map not for navigation
         map_save_duration:        60.0  # default 60s, how often to autosave
         observation_sources:      rgbd1_mark rgbd1_clear
@@ -385,7 +385,7 @@ local_costmap:
           marking: true
           clearing: false
           obstacle_range: 5.0          # meters
-          min_obstacle_height: 0.5     # default 0, meters
+          min_obstacle_height: -0.5     # default 0, meters
           max_obstacle_height: 5.0     # default 3, meters
           expected_update_rate: 0.0    # default 0, if not updating at this rate at least, remove from buffer
           observation_persistence: 0.0 # default 0, use all measurements taken during now-value, 0=latest
@@ -437,7 +437,7 @@ map_saver:
 #     planner_plugins: ["NavFn"]  # ["GridBased"]
 #     NavFn:                      # change plugin name
 #       plugin: "nav2_navfn_planner/NavfnPlanner" # In Iron and older versions, "/" was used instead of "::"
-#       tolerance: 2.0
+#       tolerance: 0.5
 #       use_astar: false
 #       allow_unknown: True
 
@@ -445,10 +445,12 @@ planner_server:
   ros__parameters:
     expected_planner_frequency: 20.0
     use_sim_time: False
+    costmap_update_timeout: 1.0
+    service_introspection_mode: "disabled"
     planner_plugins: ["Smac"]
     Smac:
       plugin: "nav2_smac_planner/SmacPlanner2D"
-      tolerance: 2.0
+      tolerance: 0.5
       allow_unknown: True
 
 planner_server_rclcpp_node:
