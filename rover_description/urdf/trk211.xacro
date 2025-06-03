@@ -11,7 +11,7 @@
                 name="velodyne" 
                 topic="/velodyne_points" 
                 organize_cloud="false" 
-                hz="5" 
+                hz="10" 
                 lasers="8" 
                 samples="200" 
                 collision_range="0.3" 
