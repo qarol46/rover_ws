@@ -1,7 +1,15 @@
 #include "ros2_control_wheeled_robot_hardware/udp_wheeled_robot.hpp"
+#include "ros2_control_wheeled_robot_hardware/message.hpp" // Подключаем заголовочный файл с структурой Message
 #include <chrono>
 #include <thread>
 #include <iomanip>
+#include <cmath>
+#include <arpa/inet.h> // Для htons/ntohs
+
+// Константы из trk211_ethernet.cpp
+constexpr float reduction = 58.64;  // Передаточное число редуктора
+constexpr float wheel_radius = 0.19;  // Радиус колеса в метрах
+constexpr float track = 0.8;  // Колея робота
 
 Eth_Socket::Eth_Socket() : socket_(io_context_) {
     RCLCPP_DEBUG(rclcpp::get_logger("Eth_Socket"), "Socket created");
@@ -46,63 +54,44 @@ bool Eth_Socket::SendWheelSpeeds(const double speeds[2]) {
     std::lock_guard<std::mutex> lock(send_mutex_);
     
     try {
+        float linear_vel = speeds[0];  // m/s
+        float angular_vel = speeds[1]; // rad/s
+
+        // Преобразование скоростей в RPM
+        linear_vel = 60.0f * linear_vel * reduction / (wheel_radius * 2.0f * M_PI);
+        angular_vel = 60.0f * angular_vel * reduction * (track/2.0f) / (wheel_radius * M_PI);
+
+        // Ограничение максимальной скорости (2400 RPM)
+        float max_rpm = 2400.0f;
+        if (fabs(linear_vel) + fabs(angular_vel) > max_rpm) {
+            float scale = max_rpm / (fabs(linear_vel) + fabs(angular_vel));
+            linear_vel *= scale;
+            angular_vel *= scale;
+        }
+
+        // Применяем масштабирование и корректируем знак для обратного направления
+        linear_vel = linear_vel * 8.74f / 9.0f;
+        angular_vel = angular_vel * 8.74f / 9.0f;
+
         Message msg;
-        msg.linear_vel = static_cast<int16_t>(speeds[0] * 1000);
-        msg.angular_vel = static_cast<int16_t>(speeds[1] * 1000);
+        msg.linear_vel = htons(static_cast<int16_t>(linear_vel));
+        msg.angular_vel = htons(static_cast<int16_t>(angular_vel));
 
-        RCLCPP_INFO(rclcpp::get_logger("Eth_Socket"), 
-                   "Sending: lin=%.3f m/s, ang=%.3f rad/s",
-                   speeds[0], speeds[1]);
-
-        std::array<uint8_t, sizeof(Message)> send_buffer;
-        std::memcpy(send_buffer.data(), &msg, sizeof(Message));
-
-        // Логирование сырых данных
-        std::stringstream raw_data;
-        for (const auto& byte : send_buffer) {
-            raw_data << std::hex << std::setw(2) << std::setfill('0') 
-                     << static_cast<int>(byte) << " ";
-        }
-        RCLCPP_DEBUG(rclcpp::get_logger("Eth_Socket"), 
-                    "Raw send data: %s", raw_data.str().c_str());
-
+        // Отправка данных
         response_received_ = false;
-        
-        // Синхронная отправка
         asio::error_code ec;
-        size_t bytes_sent = socket_.send_to(
-            asio::buffer(send_buffer), server_endpoint_, 0, ec);
+        socket_.send_to(asio::buffer(&msg, sizeof(msg)), server_endpoint_, 0, ec);
         
-        if (ec) {
-            RCLCPP_ERROR(rclcpp::get_logger("Eth_Socket"),
-                        "Send failed: %s", ec.message().c_str());
-            return false;
-        }
-        
-        RCLCPP_DEBUG(rclcpp::get_logger("Eth_Socket"),
-                    "Sent %zu bytes, waiting for response...", bytes_sent);
-
-        // Ожидание ответа с таймаутом
+        // Ожидание ответа
         auto start = std::chrono::steady_clock::now();
         while (!response_received_) {
             io_context_.run_one_for(std::chrono::milliseconds(10));
-            
             if (std::chrono::steady_clock::now() - start > std::chrono::milliseconds(1000)) {
-                RCLCPP_WARN(rclcpp::get_logger("Eth_Socket"),
-                           "Response timeout after 1000ms");
                 return false;
             }
         }
-
-        RCLCPP_DEBUG(rclcpp::get_logger("Eth_Socket"),
-                    "Response received in %ld ms",
-                    std::chrono::duration_cast<std::chrono::milliseconds>(
-                        std::chrono::steady_clock::now() - start).count());
-        
         return true;
-    } catch (const std::exception& e) {
-        RCLCPP_ERROR(rclcpp::get_logger("Eth_Socket"), 
-                    "Send error: %s", e.what());
+    } catch (...) {
         return false;
     }
 }
@@ -126,8 +115,13 @@ bool Eth_Socket::GetWheelStates(double velocities[6], double positions[6]) {
     }
 
     for (int i = 0; i < 6; ++i) {
-        velocities[i] = static_cast<double>(last_received_msg_.velocity[i]) / 1000.0;
-        positions[i] = static_cast<double>(last_received_msg_.odom[i]) / 1000.0;
+        // Velocity from rpm to rad/s
+        velocities[i] = (1.0f / (8.74f * reduction * 9.548f)) * 
+                       static_cast<double>(last_received_msg_.velocity[i]);
+        
+        // Position from encoder ticks to radians
+        positions[i] = (2.0 * M_PI / (8.0 * reduction)) * 
+                      static_cast<double>(last_received_msg_.odom[i]);
     }
 
     RCLCPP_DEBUG(rclcpp::get_logger("Eth_Socket"), 
@@ -147,6 +141,7 @@ void Eth_Socket::start_receive() {
             if (!error) {
                 if (bytes_transferred == sizeof(Message)) {
                     std::memcpy(&last_received_msg_, recv_buffer_.data(), sizeof(Message));
+                    
                     response_received_ = true;
                     RCLCPP_DEBUG(rclcpp::get_logger("Eth_Socket"),
                                 "Received %zu bytes from %s", 

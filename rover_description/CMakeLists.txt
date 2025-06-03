@@ -17,10 +17,14 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(ros2_control_wheeled_robot_hardware REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 
+ament_export_dependencies(
+  ros2_control_wheeled_robot_hardware
+)
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
@@ -36,5 +40,6 @@ install(
   DIRECTORY config launch meshes urdf worlds
   DESTINATION share/${PROJECT_NAME}
 )
+
 
 ament_package()

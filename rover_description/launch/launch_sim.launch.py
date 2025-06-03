@@ -81,9 +81,18 @@ def generate_launch_description():
             package='pointcloud_to_laserscan',
             executable='pointcloud_to_laserscan_node',
             name='pointcloud_to_laserscan',
+            remappings=[
+                ('/cloud_in', '/velodyne_points'),  # Input pointcloud
+                ('/scan', '/scan') # Output laserscan
+            ],
             parameters=[{
-                'target_frame': 'velodyne',
-                'transform_tolerance': 0.1,
+                # CRITICAL FIX: Override QoS to match RViz2 requirements
+                'qos_overrides./scan.publisher.reliability': 'reliable',  # Force RELIABLE
+                'qos_overrides./scan.publisher.durability': 'volatile',
+                'qos_overrides./scan.publisher.history': 'keep_last',
+                'qos_overrides./scan.publisher.depth': 10,
+                #'target_frame': 'laserscan',
+                'transform_tolerance': 0.01,
                 'min_height': -0.5,  # Lowered to detect ground obstacles
                 'max_height': 2.0,
                 'angle_min': -1.5708,  # -M_PI/2
@@ -94,11 +103,7 @@ def generate_launch_description():
                 'range_max': 30.0,
                 'use_inf': True,
                 'inf_epsilon': 1.0
-            }],
-            remappings=[
-                ('/cloud_in', '/velodyne_points'),  # Input pointcloud
-                ('/scan', '/scan') # Output laserscan
-            ]
+            }]
     )
 
     # Спавн робота в Gazebo
@@ -110,18 +115,18 @@ def generate_launch_description():
     )
 
     # Запуск Controller Manager
-    #control_node = Node(
-    #    package="controller_manager",
-    #    executable="ros2_control_node",
-    #    parameters=[
-    #        os.path.join(
-    #            get_package_share_directory(package_name),
-    #            "config", "my_controllers.yaml"
-    #        ),
-    #        {"use_sim_time": True}  # Использование симуляционного времени
-    #    ],
-    #    output="screen",
-    #)
+    control_node = Node(
+        package="controller_manager",
+        executable="ros2_control_node",
+        parameters=[
+            os.path.join(
+                get_package_share_directory(package_name),
+                "config", "my_controllers.yaml"
+            ),
+           {"use_sim_time": True}  # Использование симуляционного времени
+        ],
+        output="screen",
+    )
 
     # Загрузка и запуск контроллера для публикации состояний суставов
     joint_broad_spawner = Node(
@@ -140,14 +145,14 @@ def generate_launch_description():
     # Задержка запуска контроллеров после спавна робота
     delay_diff_drive_spawner = RegisterEventHandler(
         event_handler=OnProcessExit(
-            target_action=spawn_entity,
+            target_action=control_node,
             on_exit=[diff_drive_spawner],
         )
     )
 
     delay_joint_broad_spawner = RegisterEventHandler(
         event_handler=OnProcessExit(
-            target_action=diff_drive_spawner,
+            target_action=control_node,
             on_exit=[joint_broad_spawner],
        )
     )
@@ -155,15 +160,15 @@ def generate_launch_description():
     return LaunchDescription([
         rsp,
         gazebo,
+        control_node,
+        delay_diff_drive_spawner,
+        delay_joint_broad_spawner,
         spawn_entity,
         #robot_localization_node,
         #start_rviz_cmd,
-        #control_node,
-        translate,
-        delay_diff_drive_spawner,
-        delay_joint_broad_spawner,
         #joystick,
         twist_mux,
+        translate,
         slam,
         nav2
     ])
