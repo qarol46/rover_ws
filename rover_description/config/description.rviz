@@ -4,7 +4,13 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /RobotModel1/Status1
+        - /Global Options1
+        - /LaserScan1
+        - /LaserScan1/Topic1
+        - /Map1
+        - /PointCloud21
+        - /PointCloud22
+        - /TF1
       Splitter Ratio: 0.5
     Tree Height: 1198
   - Class: rviz_common/Selection
@@ -24,7 +30,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: LaserScan
 Visualization Manager:
   Class: ""
   Displays:
@@ -198,7 +204,7 @@ Visualization Manager:
       Channel Name: intensity
       Class: rviz_default_plugins/LaserScan
       Color: 255; 255; 255
-      Color Transformer: ""
+      Color Transformer: Intensity
       Decay Time: 0
       Enabled: true
       Invert Rainbow: false
@@ -207,7 +213,7 @@ Visualization Manager:
       Min Color: 0; 0; 0
       Min Intensity: 0
       Name: LaserScan
-      Position Transformer: ""
+      Position Transformer: XYZ
       Selectable: true
       Size (Pixels): 3
       Size (m): 0.009999999776482582
@@ -217,8 +223,8 @@ Visualization Manager:
         Durability Policy: Volatile
         Filter size: 10
         History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: ""
+        Reliability Policy: Best Effort
+        Value: /scan
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
@@ -234,13 +240,13 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: ""
+        Value: /map
       Update Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: ""
+        Value: /map_updates
       Use Timestamp: false
       Value: true
     - Alpha: 1
@@ -281,16 +287,16 @@ Visualization Manager:
       Channel Name: intensity
       Class: rviz_default_plugins/PointCloud2
       Color: 255; 255; 255
-      Color Transformer: ""
+      Color Transformer: Intensity
       Decay Time: 0
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 4096
+      Max Intensity: 0
       Min Color: 0; 0; 0
       Min Intensity: 0
       Name: PointCloud2
-      Position Transformer: ""
+      Position Transformer: XYZ
       Selectable: true
       Size (Pixels): 3
       Size (m): 0.009999999776482582
@@ -301,7 +307,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: ""
+        Value: /velodyne_points
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
@@ -315,16 +321,16 @@ Visualization Manager:
       Channel Name: intensity
       Class: rviz_default_plugins/PointCloud2
       Color: 255; 255; 255
-      Color Transformer: ""
+      Color Transformer: Intensity
       Decay Time: 0
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 4096
+      Max Intensity: 0
       Min Color: 0; 0; 0
       Min Intensity: 0
       Name: PointCloud2
-      Position Transformer: ""
+      Position Transformer: XYZ
       Selectable: true
       Size (Pixels): 3
       Size (m): 0.009999999776482582
@@ -335,7 +341,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: ""
+        Value: /camera/points
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
@@ -404,13 +410,7 @@ Visualization Manager:
           Value: true
         camera_link_optical:
           Value: true
-        caster_wheel:
-          Value: true
-        chassis:
-          Value: true
         ctrlbox_link:
-          Value: true
-        face_link:
           Value: true
         front_camera_link:
           Value: true
@@ -422,8 +422,6 @@ Visualization Manager:
           Value: true
         left_rear_wheel:
           Value: true
-        left_wheel:
-          Value: true
         map:
           Value: true
         odom:
@@ -433,8 +431,6 @@ Visualization Manager:
         right_middle_wheel:
           Value: true
         right_rear_wheel:
-          Value: true
-        right_wheel:
           Value: true
         root_link:
           Value: true
@@ -448,59 +444,56 @@ Visualization Manager:
       Name: TF
       Show Arrows: true
       Show Axes: true
-      Show Names: false
+      Show Names: true
       Tree:
-        root_link:
-          base_footprint:
-            {}
-          base_link:
-            chassis:
-              caster_wheel:
+        map:
+          odom:
+            root_link:
+              base_footprint:
                 {}
-              face_link:
-                {}
-            ctrlbox_link:
-              front_camera_link:
-                camera_bottom_screw_frame:
-                  camera_link:
-                    camera_color_frame:
-                      camera_color_optical_frame:
-                        {}
-                    camera_depth_frame:
-                      camera_depth_optical_frame:
-                        {}
-                    camera_infra1_frame:
-                      camera_infra1_optical_frame:
-                        {}
-                    camera_infra2_frame:
-                      camera_infra2_optical_frame:
-                        {}
-                camera_link_optical:
-                  {}
-              gps_link:
-                {}
-              visionbox_link:
-                velodyne_base_link:
-                  velodyne:
+              base_link:
+                ctrlbox_link:
+                  front_camera_link:
+                    camera_bottom_screw_frame:
+                      camera_link:
+                        camera_color_frame:
+                          camera_color_optical_frame:
+                            {}
+                        camera_depth_frame:
+                          camera_depth_optical_frame:
+                            {}
+                        camera_infra1_frame:
+                          camera_infra1_optical_frame:
+                            {}
+                        camera_infra2_frame:
+                          camera_infra2_optical_frame:
+                            {}
+                    camera_link_optical:
+                      {}
+                  gps_link:
                     {}
-            left_forward_wheel:
-              {}
-            left_middle_wheel:
-              {}
-            left_rear_wheel:
-              {}
-            right_forward_wheel:
-              {}
-            right_middle_wheel:
-              {}
-            right_rear_wheel:
-              {}
+                  visionbox_link:
+                    velodyne_base_link:
+                      velodyne:
+                        {}
+                left_forward_wheel:
+                  {}
+                left_middle_wheel:
+                  {}
+                left_rear_wheel:
+                  {}
+                right_forward_wheel:
+                  {}
+                right_middle_wheel:
+                  {}
+                right_rear_wheel:
+                  {}
       Update Interval: 0
       Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: base_footprint
+    Fixed Frame: map
     Frame Rate: 30
   Name: root
   Tools:
@@ -543,7 +536,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 2.464024305343628
+      Distance: 18.73074722290039
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -558,10 +551,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.28520265221595764
+      Pitch: 0.5852037072181702
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.911688327789307
+      Yaw: 2.5466926097869873
     Saved: ~
 Window Geometry:
   Displays:
