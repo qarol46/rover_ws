@@ -1,23 +1,29 @@
 #include <rclcpp/rclcpp.hpp>
 #include <asio.hpp>
 #include <iomanip>
+#include <cmath>
+
+// Константы для преобразования единиц (должны совпадать с клиентом)
+constexpr float reduction = 58.64;  // Передаточное число редуктора
+constexpr float wheel_radius = 0.19;  // Радиус колеса в метрах
+constexpr float track = 0.8;  // Колея робота
 
 #pragma pack(push, 1)
 struct Message {
-    uint8_t number_device;
-    uint8_t operating_mode;
-    uint8_t work_device;
-    uint8_t null_array_1[11];
-    int16_t linear_vel;
-    int16_t angular_vel;
-    uint8_t null_array_2[46];
-    int16_t torque[6];
-    uint8_t __RES2[2];
-    int16_t velocity[6];
-    uint8_t __RES3[2];
-    int16_t odom[6];
-    uint8_t null_array_3[23];
-    uint8_t sender_addres;
+    uint8_t number_device; //0  
+    uint8_t operating_mode; //1
+    uint8_t work_device; //2
+    uint8_t null_array_1[11]; //3-13
+    int16_t linear_vel; //14-15
+    int16_t angular_vel; //16-17
+    uint8_t null_array_2[46]; //18-63
+    int16_t torque[6]; //64-75
+    uint8_t __RES2[2]; //76-77
+    int16_t velocity[6]; //78-89
+    uint8_t __RES3[2]; //90-91
+    int16_t odom[6]; //92-103
+    uint8_t null_array_3[23]; //104-126
+    uint8_t sender_addres; //127
 
     Message() 
         : number_device(0x23),
@@ -44,7 +50,7 @@ public:
         try {
             socket_.open(asio::ip::udp::v4());
             socket_.bind(asio::ip::udp::endpoint(
-                asio::ip::address::from_string("127.0.0.1"), 8889));
+                asio::ip::address::from_string("127.0.0.1"), 8889)); 
             
             RCLCPP_INFO(this->get_logger(), "UDP Server started on port 8889");
             
@@ -75,31 +81,43 @@ private:
             Message recv_msg;
             std::memcpy(&recv_msg, recv_buffer_.data(), sizeof(Message));
 
-            // Логирование полученных данных
-            RCLCPP_INFO(this->get_logger(), "Received cmd: lin=%.3f m/s, ang=%.3f rad/s", 
-                       static_cast<double>(recv_msg.linear_vel) / 1000.0,
-                       static_cast<double>(recv_msg.angular_vel) / 1000.0);
-            
-            // Лог сырых данных
-            //log_raw_data("Received raw", recv_buffer_);
+            // Преобразуем порядок байт для числовых полей
+            recv_msg.linear_vel = ntohs(recv_msg.linear_vel);
+            recv_msg.angular_vel = ntohs(recv_msg.angular_vel);
 
-            // Подготовка ответа с пересчитанными данными
+            // Логирование полученных данных (в RPM)
+            float lin_rpm = recv_msg.linear_vel * 9.0f / 8.74f;
+            float ang_rpm = -recv_msg.angular_vel * 9.0f / 8.74f; // Учитываем знак минус
+            
+            RCLCPP_INFO(this->get_logger(), 
+                       "Received cmd: lin=%.1f RPM (raw=%d), ang=%.1f RPM (raw=%d)", 
+                       lin_rpm, recv_msg.linear_vel,
+                       ang_rpm, recv_msg.angular_vel);
+
+            // Подготовка ответа
             Message send_msg;
             process_wheel_data(recv_msg, send_msg);
 
+            // Преобразуем порядок байт перед отправкой
+            for (int i = 0; i < 6; i++) {
+                send_msg.velocity[i] = htons(send_msg.velocity[i]);
+                send_msg.odom[i] = htons(send_msg.odom[i]);
+            }
+
             // Логирование отправляемых данных
-            RCLCPP_INFO(this->get_logger(), "Sending: velocities=[%d, %d, %d, %d, %d, %d], odom=[%d, %d, %d, %d, %d, %d]",
-                       send_msg.velocity[0], send_msg.velocity[1], send_msg.velocity[2],
-                       send_msg.velocity[3], send_msg.velocity[4], send_msg.velocity[5],
-                       send_msg.odom[0], send_msg.odom[1], send_msg.odom[2],
-                       send_msg.odom[3], send_msg.odom[4], send_msg.odom[5]);
-            
-            // Лог сырых данных
-            std::array<uint8_t, sizeof(Message)> send_buffer;
-            std::memcpy(send_buffer.data(), &send_msg, sizeof(Message));
-            //log_raw_data("Sending raw", send_buffer);
+            RCLCPP_INFO(this->get_logger(), 
+                       "Sending: vel=[%d, %d, %d, %d, %d, %d], odom=[%d, %d, %d, %d, %d, %d]",
+                       ntohs(send_msg.velocity[0]), ntohs(send_msg.velocity[1]),
+                       ntohs(send_msg.velocity[2]), ntohs(send_msg.velocity[3]),
+                       ntohs(send_msg.velocity[4]), ntohs(send_msg.velocity[5]),
+                       ntohs(send_msg.odom[0]), ntohs(send_msg.odom[1]),
+                       ntohs(send_msg.odom[2]), ntohs(send_msg.odom[3]),
+                       ntohs(send_msg.odom[4]), ntohs(send_msg.odom[5]));
 
             // Отправка ответа
+            std::array<uint8_t, sizeof(Message)> send_buffer;
+            std::memcpy(send_buffer.data(), &send_msg, sizeof(Message));
+            
             socket_.async_send_to(
                 asio::buffer(send_buffer), remote_endpoint_,
                 [this](const asio::error_code& error, size_t /*bytes_sent*/) {
@@ -109,6 +127,12 @@ private:
                     start_receive();
                 });
         } else {
+            if (error) {
+                RCLCPP_ERROR(this->get_logger(), "Receive error: %s", error.message().c_str());
+            } else {
+                RCLCPP_WARN(this->get_logger(), "Invalid message size: %zu (expected %zu)",
+                           bytes_transferred, sizeof(Message));
+            }
             start_receive();
         }
     }
@@ -120,29 +144,30 @@ private:
         output.work_device = input.work_device;
         output.sender_addres = input.sender_addres;
 
-        double linear = static_cast<double>(input.linear_vel) / 1000.0;
-        double angular = static_cast<double>(input.angular_vel) / 1000.0;
+        // Преобразуем скорости из raw значений в RPM
+        float linear_rpm = input.linear_vel * 9.0f / 8.74f;
+        float angular_rpm = -input.angular_vel * 9.0f / 8.74f; // Учитываем знак минус
 
+        // Рассчитываем скорость для каждого колеса
         for (int i = 0; i < 6; i++) {
-            // Рассчитываем скорость для каждого колеса
-            double wheel_vel = linear + ((i < 3) ? -1 : 1) * angular * 0.4;
-            output.velocity[i] = static_cast<int16_t>(wheel_vel * 1000);
-            
-            // Обновляем одометрию
-            static uint32_t odom_counter[6] = {0};
-            odom_counter[i] += abs(output.velocity[i]);
-            output.odom[i] = static_cast<int16_t>(odom_counter[i] % 65535);
+            // Объявляем переменную перед использованием
+            float wheel_rpm;
+        
+            // Моделируем скорость колеса (линейная + угловая компоненты)
+            if(i % 2 == 0) {
+                wheel_rpm = linear_rpm - angular_rpm * 0.5f;
+            } else {
+                wheel_rpm = -(linear_rpm + angular_rpm * 0.5f);
+            }
+        
+            // Преобразуем RPM в raw значение (как в клиенте)
+            output.velocity[i] = static_cast<int16_t>(wheel_rpm * 8.74f * 9.548f * reduction);
+        
+            // Обновляем одометрию (имитация энкодера)
+            static int32_t odom_counter[6] = {0};
+            odom_counter[i] += static_cast<int32_t>(output.velocity[i] * 0.1f); // Интегрируем скорость
+            output.odom[i] = static_cast<int16_t>(odom_counter[i] / 100); // Масштабируем
         }
-    }
-
-    void log_raw_data(const std::string& prefix, const std::array<uint8_t, sizeof(Message)>& buffer) {
-        std::stringstream ss;
-        ss << prefix << " data: ";
-        for (size_t i = 0; i < buffer.size(); ++i) {
-            ss << std::hex << std::setw(2) << std::setfill('0') 
-               << static_cast<int>(buffer[i]) << " ";
-        }
-        RCLCPP_INFO(this->get_logger(), "%s", ss.str().c_str());
     }
 
     asio::io_context io_context_;

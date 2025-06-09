@@ -10,14 +10,23 @@ from launch.actions import DeclareLaunchArgument
 
 
 def generate_launch_description():
+
     package_name = 'rover_description'
 
+    use_sim_time = DeclareLaunchArgument(
+        'use_sim_time',
+        default_value='true',
+        description='Use simulation (Gazebo) clock if true'
+    )
+
+    use_sim_time_arg = LaunchConfiguration('use_sim_time')
+    
     # Запуск rsp.launch.py для публикации robot_description
 
     rsp = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([os.path.join(
             get_package_share_directory(package_name), 'launch', 'rsp.launch.py'
-        )]), launch_arguments={'use_sim_time': 'true', 'use_ros2_control': 'true'}.items()
+        )]), launch_arguments={'use_sim_time': use_sim_time_arg, 'use_ros2_control': 'true'}.items()
     )
     
     #joystick = IncludeLaunchDescription(
@@ -26,7 +35,6 @@ def generate_launch_description():
     #            )]), launch_arguments={'use_sim_time': 'true'}.items()
     #)
 
-    #Lead to velodyne queque overload - filter dropping message
     #ekf_config = os.path.join(get_package_share_directory(package_name), 'config', 'ekf.yaml')
     #robot_localization_node = Node(
     #    package='robot_localization',
@@ -52,9 +60,9 @@ def generate_launch_description():
     twist_mux = Node(
             package="twist_mux",
             executable="twist_mux",
-            parameters=[twist_mux_params, {'use_sim_time': True}],
+            parameters=[twist_mux_params, {'use_sim_time': use_sim_time_arg}],
             remappings=[('/cmd_vel_out','/diff_cont/cmd_vel_unstamped')]
-        )
+    )
     
     # Запуск Gazebo
     gazebo_world_file = os.path.join(get_package_share_directory(package_name),'worlds','gas_station.world')
@@ -63,44 +71,6 @@ def generate_launch_description():
             get_package_share_directory('gazebo_ros'), 'launch', 'gazebo.launch.py')]),
             launch_arguments={'world': gazebo_world_file}.items()
     )
-   
-    slam_config_file = os.path.join(get_package_share_directory('rover_navigation'), 'config', 'slam.yaml')
-    slam = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource([os.path.join(
-            get_package_share_directory('slam_toolbox'), 'launch', 'online_async_launch.py')]),
-            launch_arguments={'params_file': slam_config_file}.items()
-    )
-    nav2_config_file = os.path.join(get_package_share_directory('rover_navigation'), 'config', 'navigation_sim.yaml')
-    nav2 = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource([os.path.join(
-            get_package_share_directory('rover_navigation'), 'launch', 'navigation.launch.py')]),
-            launch_arguments={'params_file': nav2_config_file}.items()
-    )
-    
-    translate = Node(
-            package='pointcloud_to_laserscan',
-            executable='pointcloud_to_laserscan_node',
-            name='pointcloud_to_laserscan',
-            parameters=[{
-                #'target_frame': 'velodyne',
-                'transform_tolerance': 0.1,
-                'min_height': -0.5,  # Lowered to detect ground obstacles
-                'max_height': 2.0,
-                'angle_min': -1.5708,  # -M_PI/2
-                'angle_max': 1.5708,  # M_PI/2
-                'angle_increment': 0.01745,  # ~1 degree resolution
-                'scan_time': 0.01,
-                'range_min': 0.9,
-                'range_max': 5.0,
-                'use_inf': True,
-                'inf_epsilon': 1.0
-            }],
-            remappings=[
-                ('/cloud_in', '/velodyne_points'),  # Input pointcloud
-                ('/scan', '/scan') # Output laserscan
-            ]
-    )
-
     # Спавн робота в Gazebo
     spawn_entity = Node(
         package='gazebo_ros',
@@ -118,7 +88,7 @@ def generate_launch_description():
                 get_package_share_directory(package_name),
                 "config", "my_controllers.yaml"
             ),
-           {"use_sim_time": True}  # Использование симуляционного времени
+           {"use_sim_time": use_sim_time_arg}  # Использование симуляционного времени
         ],
         output="screen",
     )
@@ -134,36 +104,19 @@ def generate_launch_description():
     diff_drive_spawner = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["diff_cont"],
-    )
-
-    # Задержка запуска контроллеров после спавна робота
-    delay_diff_drive_spawner = RegisterEventHandler(
-        event_handler=OnProcessExit(
-            target_action=control_node,
-            on_exit=[diff_drive_spawner],
-        )
-    )
-
-    delay_joint_broad_spawner = RegisterEventHandler(
-        event_handler=OnProcessExit(
-            target_action=control_node,
-            on_exit=[joint_broad_spawner],
-       )
+        arguments=["diff_cont"]
     )
 
     return LaunchDescription([
+        use_sim_time,
         rsp,
         gazebo,
-        control_node,
-        delay_diff_drive_spawner,
-        delay_joint_broad_spawner,
+        #control_node,
         spawn_entity,
+        diff_drive_spawner,
+        joint_broad_spawner,
         #robot_localization_node,
-        #start_rviz_cmd,
+        start_rviz_cmd,
         #joystick,
-        twist_mux,
-        translate,
-        slam,
-        #nav2
+        twist_mux
     ])

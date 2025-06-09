@@ -1,6 +1,7 @@
 controller_manager:
   ros__parameters:
-    update_rate: 50              # частота обновления контроллеров
+    update_rate: 30            # частота обновления контроллеров'
+    use_sim_time: true
 
     # регистрируем контроллеры
     diff_cont:
@@ -10,10 +11,14 @@ controller_manager:
 
 # ----------------- DiffDriveController -----------------
 diff_cont:
-  ros__parameters: 
-    odom_frame_id: "odom"
-    base_frame_id: "root_link"
+  ros__parameters:
+    odom_frame_id: odom
     enable_odom_tf: true
+    publish_odom_tf: true
+    # ros__remappings:
+    #   - ["odom", "/odom"]
+    base_frame_id: root_link
+    wheels_per_side: 3
     left_wheel_names: 
       - "base_to_left_forward_wheel"
       - "base_to_left_middle_wheel"
@@ -27,8 +32,8 @@ diff_cont:
     state_interfaces:
       - velocity
       - position
-    wheel_separation: 0.8
-    wheel_radius: 0.19
+    wheel_separation: 0.9
+    wheel_radius: 0.23
     cmd_vel_timeout: 0.5
     use_stamped_vel: false
     publish_rate: 50.0 # Defaults to 50

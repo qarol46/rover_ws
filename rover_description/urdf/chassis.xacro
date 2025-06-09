@@ -41,6 +41,10 @@
   <xacro:property name="track" value="0.8" />
   <xacro:property name="clearance" value="0.2" />
   <xacro:property name="wheel_vertical_offset" value="0.03282"/>
+  <xacro:property name="mu1" value="0.2"/>
+  <xacro:property name="mu2" value="0.2"/>
+  
+
 
   <xacro:arg name="laser_rotation" default="false"/>
 
@@ -162,11 +166,7 @@
 		            ${ctrlbox_link_height/2+visionbox_link_height/2}" rpy="0 0 0"/>
   </joint>
 
-  <link name="front_camera_link"></link>
-  
-  <!--xacro:sensor_d415 parent="front_camera_link" use_nominal_extrinsics="true" add_plug="false">
-    <origin xyz="0 0 0" rpy="0 0 0"/>
-  </xacro:sensor_d415-->
+  <link name="front_camera_link"/>
 
   <joint name="ctrlbox_to_camera_link" type="fixed">
     <parent link="ctrlbox_link"/>
@@ -174,7 +174,7 @@
     <origin xyz="${ctrlbox_link_length/2} 0.0 0.026" rpy="0 0 0"/>
   </joint>
 
-  <xacro:macro name="wheel_joint" params="w_name origin_x origin_y origin_z geometry_yaw mu1 mu2">
+  <xacro:macro name="wheel_joint" params="w_name origin_x origin_y origin_z geometry_yaw mu1=${mu1} mu2=${mu2}">
     <link name="${w_name}_wheel">
       <visual>
         <geometry>
@@ -226,54 +226,42 @@
     origin_y="${track/2}"
     origin_x="${wheelbase/2}"
     origin_z="${wheel_radius-base_link_height/2-clearance}"
-    geometry_yaw="0"
-    mu1="0.5"
-    mu2="0.5"/>
+    geometry_yaw="0"/>
 
   <xacro:wheel_joint
     w_name="left_middle"
     origin_y="${track/2}"
     origin_x="0"
     origin_z="${wheel_radius-base_link_height/2-clearance}"
-    geometry_yaw="0"
-    mu1="0.5"
-    mu2="0.5"/>
+    geometry_yaw="0"/>
 
   <xacro:wheel_joint
     w_name="left_rear"
     origin_y="${track/2}"
     origin_x="${-wheelbase/2}"
     origin_z="${wheel_radius-base_link_height/2-clearance}"
-    geometry_yaw="0"
-    mu1="0.5"
-    mu2="0.5"/>
+    geometry_yaw="0"/>
 
   <xacro:wheel_joint
     w_name="right_forward"
     origin_y="${-track/2}"
     origin_x="${wheelbase/2}"
     origin_z="${wheel_radius-base_link_height/2-clearance}"
-    geometry_yaw="${pi}"
-    mu1="0.5"
-    mu2="0.5"/>
+    geometry_yaw="${pi}"/>
 
   <xacro:wheel_joint
     w_name="right_middle"
     origin_y="${-track/2}"
     origin_x="0"
     origin_z="${wheel_radius-base_link_height/2-clearance}"
-    geometry_yaw="${pi}"
-    mu1="0.5"
-    mu2="0.5"/>
+    geometry_yaw="${pi}"/>
     
   <xacro:wheel_joint
     w_name="right_rear"
     origin_y="${-track/2}"
     origin_x="${-wheelbase/2}"
     origin_z="${wheel_radius-base_link_height/2-clearance}"
-    geometry_yaw="${pi}"
-    mu1="0.5"
-    mu2="0.5"/>
+    geometry_yaw="${pi}"/>
 
   <!-- GPS -->
   <link name="gps_link"></link>
