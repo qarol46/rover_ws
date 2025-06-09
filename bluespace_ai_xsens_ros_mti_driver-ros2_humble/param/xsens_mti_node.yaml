@@ -27,14 +27,14 @@
         # Message publishers
         pub_imu: true
         pub_quaternion: false
-        pub_mag: false
-        pub_angular_velocity: false
-        pub_acceleration: false
+        pub_mag: true
+        pub_angular_velocity: true
+        pub_acceleration: true
         pub_free_acceleration: false
         pub_dq: false
         pub_dv: false
         pub_sampletime: false
-        pub_temperature: false
+        pub_temperature: true
         pub_pressure: false
         pub_gnss: false
         pub_twist: false
@@ -46,7 +46,7 @@
         ## This value is used to override the covariance matrix in sensor_msgs/Imu and
         ## sensor_msgs/MagneticField messages.
         ## Important: Make sure the values provided are in decimal points, or else might give error in execution
-        linear_acceleration_stddev: [0.0, 0.0, 0.0] # [m/s^2]
-        angular_velocity_stddev: [0.0, 0.0, 0.0] # [rad/s]
-        orientation_stddev: [0.0, 0.0, 0.0] # [rad]
+        linear_acceleration_stddev: [0.01, 0.01, 0.01] # [m/s^2]
+        angular_velocity_stddev: [0.01, 0.01, 0.01] # [rad/s]
+        orientation_stddev: [0.01, 0.01, 0.01] # [rad]
         magnetic_field_stddev: [0.0, 0.0, 0.0] # [Tesla]
