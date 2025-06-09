@@ -30,7 +30,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: LaserScan
+    SyncSource: PointCloud2
 Visualization Manager:
   Class: ""
   Displays:
@@ -422,8 +422,6 @@ Visualization Manager:
           Value: true
         left_rear_wheel:
           Value: true
-        map:
-          Value: true
         odom:
           Value: true
         right_forward_wheel:
@@ -446,54 +444,53 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        map:
-          odom:
-            root_link:
-              base_footprint:
-                {}
-              base_link:
-                ctrlbox_link:
-                  front_camera_link:
-                    camera_bottom_screw_frame:
-                      camera_link:
-                        camera_color_frame:
-                          camera_color_optical_frame:
-                            {}
-                        camera_depth_frame:
-                          camera_depth_optical_frame:
-                            {}
-                        camera_infra1_frame:
-                          camera_infra1_optical_frame:
-                            {}
-                        camera_infra2_frame:
-                          camera_infra2_optical_frame:
-                            {}
-                    camera_link_optical:
-                      {}
-                  gps_link:
+        odom:
+          root_link:
+            base_footprint:
+              {}
+            base_link:
+              ctrlbox_link:
+                front_camera_link:
+                  camera_bottom_screw_frame:
+                    camera_link:
+                      camera_color_frame:
+                        camera_color_optical_frame:
+                          {}
+                      camera_depth_frame:
+                        camera_depth_optical_frame:
+                          {}
+                      camera_infra1_frame:
+                        camera_infra1_optical_frame:
+                          {}
+                      camera_infra2_frame:
+                        camera_infra2_optical_frame:
+                          {}
+                  camera_link_optical:
                     {}
-                  visionbox_link:
-                    velodyne_base_link:
-                      velodyne:
-                        {}
-                left_forward_wheel:
+                gps_link:
                   {}
-                left_middle_wheel:
-                  {}
-                left_rear_wheel:
-                  {}
-                right_forward_wheel:
-                  {}
-                right_middle_wheel:
-                  {}
-                right_rear_wheel:
-                  {}
+                visionbox_link:
+                  velodyne_base_link:
+                    velodyne:
+                      {}
+              left_forward_wheel:
+                {}
+              left_middle_wheel:
+                {}
+              left_rear_wheel:
+                {}
+              right_forward_wheel:
+                {}
+              right_middle_wheel:
+                {}
+              right_rear_wheel:
+                {}
       Update Interval: 0
       Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: map
+    Fixed Frame: odom
     Frame Rate: 30
   Name: root
   Tools:
@@ -536,7 +533,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 18.73074722290039
+      Distance: 9.739988327026367
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -551,10 +548,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5852037072181702
+      Pitch: 0.4552038908004761
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.5466926097869873
+      Yaw: 1.6916868686676025
     Saved: ~
 Window Geometry:
   Displays:

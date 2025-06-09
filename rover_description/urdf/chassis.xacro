@@ -41,8 +41,8 @@
   <xacro:property name="track" value="0.8" />
   <xacro:property name="clearance" value="0.2" />
   <xacro:property name="wheel_vertical_offset" value="0.03282"/>
-  <xacro:property name="mu1" value="0.2"/>
-  <xacro:property name="mu2" value="0.2"/>
+  <xacro:property name="mu1" value="0.5"/>
+  <xacro:property name="mu2" value="0.5"/>
   
 
 
