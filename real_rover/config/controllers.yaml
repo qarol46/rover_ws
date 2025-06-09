@@ -26,8 +26,8 @@ diff_cont:
     state_interfaces:
       - velocity
       - position
-    wheel_separation: 0.8
-    wheel_radius: 0.19
+    wheel_separation: 0.9
+    wheel_radius: 0.23
     cmd_vel_timeout: 0.5
     use_stamped_vel: false
     state_publish_rate: 50.0 # Defaults to 50

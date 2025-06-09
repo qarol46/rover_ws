@@ -142,33 +142,18 @@ def generate_launch_description():
         arguments=["diff_cont"],
     )
 
-    # Задержка запуска контроллеров после спавна робота
-    delay_diff_drive_spawner = RegisterEventHandler(
-        event_handler=OnProcessExit(
-            target_action=control_node,
-            on_exit=[diff_drive_spawner],
-        )
-    )
-
-    delay_joint_broad_spawner = RegisterEventHandler(
-        event_handler=OnProcessExit(
-            target_action=control_node,
-            on_exit=[joint_broad_spawner],
-       )
-    )
-
     return LaunchDescription([
         rsp,
         gazebo,
         control_node,
-        delay_diff_drive_spawner,
-        delay_joint_broad_spawner,
+        diff_drive_spawner,
+        joint_broad_spawner,
         spawn_entity,
         #robot_localization_node,
         #start_rviz_cmd,
         #joystick,
         twist_mux,
-        translate,
-        slam,
-        nav2
+        #translate,
+        #slam,
+        #nav2
     ])

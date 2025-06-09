@@ -5,7 +5,7 @@
         <hardware>
             <plugin>gazebo_ros2_control/GazeboSystem</plugin>
         </hardware>
-        <joint name="base_to_l_f_wheel">
+        <joint name="base_to_left_forward_wheel">
             <command_interface name="velocity">
                 <param name="min">-10</param>
                 <param name="max">10</param>
@@ -13,7 +13,7 @@
             <state_interface name="velocity"/>
             <state_interface name="position"/>
         </joint>
-        <joint name="base_to_l_m_wheel">
+        <joint name="base_to_left_middle_wheel">
             <command_interface name="velocity">
                 <param name="min">-10</param>
                 <param name="max">10</param>
@@ -21,7 +21,7 @@
             <state_interface name="velocity"/>
             <state_interface name="position"/>
         </joint>
-        <joint name="base_to_l_r_wheel">
+        <joint name="base_to_left_rear_wheel">
             <command_interface name="velocity">
                 <param name="min">-10</param>
                 <param name="max">10</param>
@@ -29,7 +29,7 @@
             <state_interface name="velocity"/>
             <state_interface name="position"/>
         </joint>
-        <joint name="base_to_r_f_wheel">
+        <joint name="base_to_right_forward_wheel">
             <command_interface name="velocity">
                 <param name="min">-10</param>
                 <param name="max">10</param>
@@ -37,7 +37,7 @@
             <state_interface name="velocity"/>
             <state_interface name="position"/>
         </joint>
-        <joint name="base_to_r_m_wheel">
+        <joint name="base_to_right_middle_wheel">
             <command_interface name="velocity">
                 <param name="min">-10</param>
                 <param name="max">10</param>
@@ -45,7 +45,7 @@
             <state_interface name="velocity"/>
             <state_interface name="position"/>
         </joint>
-        <joint name="base_to_r_r_wheel">
+        <joint name="base_to_right_rear_wheel">
             <command_interface name="velocity">
                 <param name="min">-10</param>
                 <param name="max">10</param>
@@ -58,9 +58,10 @@
     <gazebo>
         <plugin name="gazebo_ros2_control" filename="libgazebo_ros2_control.so">
             <parameters>$(find rover_description)/config/my_controllers.yaml</parameters>
+            <parameters>$(find rover_description)/config/gaz_ros2_ctl_use_sim.yaml</parameters>
         </plugin>
-        <updateRate>30</updateRate>
- <!--   <ros>
+        <!-- <updateRate>10</updateRate> -->
+        <!-- <ros>
           <remapping>odom:=odom/unfiltered</remapping>
         </ros> -->
     </gazebo>

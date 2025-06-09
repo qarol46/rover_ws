@@ -35,7 +35,7 @@
   <xacro:property name="visionbox_link_width" value="0.20" />
   <xacro:property name="visionbox_link_height" value="0.015" />
   <xacro:property name="wheel_mass" value="20.0" /><!-- please correct this -->
-  <xacro:property name="wheel_radius" value="0.19" /><!-- please correct this -->
+  <xacro:property name="wheel_radius" value="0.23" /><!-- please correct this -->
   <xacro:property name="wheel_height" value="0.15" /><!-- please correct this -->
   <xacro:property name="wheelbase" value="1.0" /><!-- please correct this -->
   <xacro:property name="track" value="0.8" />
@@ -162,11 +162,7 @@
 		            ${ctrlbox_link_height/2+visionbox_link_height/2}" rpy="0 0 0"/>
   </joint>
 
-  <link name="front_camera_link"></link>
-  
-  <!--xacro:sensor_d415 parent="front_camera_link" use_nominal_extrinsics="true" add_plug="false">
-    <origin xyz="0 0 0" rpy="0 0 0"/>
-  </xacro:sensor_d415-->
+  <link name="front_camera_link"/>
 
   <joint name="ctrlbox_to_camera_link" type="fixed">
     <parent link="ctrlbox_link"/>
