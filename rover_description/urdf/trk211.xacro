@@ -3,7 +3,7 @@
 
   <!-- Включение файлов -->
   <xacro:include filename="chassis.xacro"/>
-  <!-- <xacro:include filename="imu.xacro"/> -->
+  <xacro:include filename="imu.xacro"/>
   <xacro:include filename="ros2_control.xacro"/>
   <xacro:include filename="$(find velodyne_description)/urdf/VLP-16.urdf.xacro"/>
   <xacro:VLP-16 parent="visionbox_link" 

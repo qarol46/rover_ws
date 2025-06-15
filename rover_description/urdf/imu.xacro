@@ -42,7 +42,7 @@
     <sensor name="imu_sensor" type="imu">
       <pose relative_to='xsens_link'>0 0 0 0 0 0</pose>
       <always_on>true</always_on>
-      <update_rate>100</update_rate>
+      <update_rate>50</update_rate>
       <!--reduced version of the plugin for ros2 without params-->
       <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
         <ros>

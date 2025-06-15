@@ -1,11 +1,13 @@
 ekf_filter_node:
   ros__parameters:
+    debug: true  # Добавьте в ekf.yaml
+    use_sim_time: true
     publish_tf: true
-    frequency: 10.0
+    frequency: 50.0
     # Задержка перед очисткой буфера (сек)
-    tf_timeout: 1.5  
+    #tf_timeout: 1.5  
     # Игнорировать небольшие скачки времени
-    tf_time_jump_threshold: 0.05  
+    #tf_time_jump_threshold: 0.05  
     #sensor_timeout: 0.1
     two_d_mode: true       # Для наземных роботов (2D)
     
@@ -17,8 +19,8 @@ ekf_filter_node:
 
     # Источник 1: Колёсная одометрия
     odom0: diff_cont/odom     # Топик одометрии
-    odom0_config: [false, false, false,
-                   false, false, false,
+    odom0_config: [true, true, true,
+                   true, true, false,
                    true, true, false,
                    false, false, true,
                    false, false, false]
@@ -27,16 +29,28 @@ ekf_filter_node:
     imu0: /imu        # Топик IMU
     imu0_config: [false,   false,  false,  # Позиция (не используется)
                   true,    true,   true,   # Ориентация (roll, pitch, yaw)
-                  false,   false,  false,  # Линейная скорость
-                  true,    true,   true,   # Угловая скорость
+                  true,   true,  false,  # Линейная скорость
+                  false,    false,   false,   # Угловая скорость
                   false,   false,  false]  # Линейное ускорение
 
     # Приоритеты источников
-    #odom0_differential: false  # Одометрия не дифференциальная
-    #imu0_differential: false   # IMU не дифференциальный
+    odom0_differential: false  # Одометрия не дифференциальная
+    imu0_differential: false   # IMU не дифференциальный
 
     # Фреймы
-    map_frame: map                    # Фрейм карты
-    world_frame: odom                 # Глобальный фрейм
-    odom_frame: odom                  # Фрейм одометрии
-    base_link_frame: base_link   # Базовый фрейм робота
+    map_frame: map 
+    odom_frame: odom
+    base_link_frame: base_link
+    world_frame: odom
+
+    #odom0_pose_rejection_threshold: 10.0 
+        
+    odom0_queue_size: 1
+    odom0_nodelay: false
+    odom0_remove_gravitational_acceleration: false
+    odom0_relative: false
+
+    imu0_pose_rejection_threshold: 3.0
+    imu0_queue_size: 1
+    imu0_nodelay: false
+    imu0_relative: false
