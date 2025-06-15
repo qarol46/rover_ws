@@ -35,10 +35,10 @@
   <xacro:property name="visionbox_link_width" value="0.20" />
   <xacro:property name="visionbox_link_height" value="0.015" />
   <xacro:property name="wheel_mass" value="20.0" /><!-- please correct this -->
-  <xacro:property name="wheel_radius" value="0.19" /><!-- please correct this -->
+  <xacro:property name="wheel_radius" value="0.23" /><!-- please correct this -->
   <xacro:property name="wheel_height" value="0.15" /><!-- please correct this -->
   <xacro:property name="wheelbase" value="1.0" /><!-- please correct this -->
-  <xacro:property name="track" value="0.8" />
+  <xacro:property name="track" value="0.9" />
   <xacro:property name="clearance" value="0.2" />
   <xacro:property name="wheel_vertical_offset" value="0.03282"/>
   <xacro:property name="mu1" value="0.5"/>

@@ -5,11 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
-        - /LaserScan1
         - /LaserScan1/Topic1
-        - /Map1
-        - /PointCloud21
-        - /PointCloud22
         - /TF1
       Splitter Ratio: 0.5
     Tree Height: 1198
@@ -533,7 +529,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 9.739988327026367
+      Distance: 5.649864196777344
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -548,10 +544,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.4552038908004761
+      Pitch: 0.6352037191390991
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.6916868686676025
+      Yaw: 3.126695394515991
     Saved: ~
 Window Geometry:
   Displays:

@@ -58,7 +58,6 @@
     <gazebo>
         <plugin name="gazebo_ros2_control" filename="libgazebo_ros2_control.so">
             <parameters>$(find rover_description)/config/my_controllers.yaml</parameters>
-            <parameters>$(find rover_description)/config/gaz_ros2_ctl_use_sim.yaml</parameters>
         </plugin>
         <!-- <updateRate>10</updateRate> -->
         <!-- <ros>

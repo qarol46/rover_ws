@@ -71,7 +71,6 @@ def generate_launch_description():
             get_package_share_directory('gazebo_ros'), 'launch', 'gazebo.launch.py')]),
             launch_arguments={'world': gazebo_world_file}.items()
     )
-
     # Спавн робота в Gazebo
     spawn_entity = Node(
         package='gazebo_ros',

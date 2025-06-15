@@ -1,6 +1,8 @@
+# .201 IP velodyne or wireshark for test
+# Good guide: https://automaticaddison.com/ros-2-navigation-tuning-guide-nav2/
 amcl:
   ros__parameters:
-    use_sim_time: True
+    use_sim_time: False
     alpha1: 0.2
     alpha2: 0.2
     alpha3: 0.2
@@ -12,7 +14,7 @@ amcl:
     beam_skip_threshold: 0.3
     do_beamskip: false
     global_frame_id: "map"
-    lambda_short: 0.1
+    lambda_short: 0.3
     laser_likelihood_max_dist: 2.0
     laser_max_range: 5.0
     laser_min_range: 0.9
@@ -30,34 +32,63 @@ amcl:
     save_pose_rate: 0.5
     sigma_hit: 0.2
     tf_broadcast: True
-    transform_tolerance: 3.0
+    transform_tolerance: 1.0 #Seconds
     update_min_a: 0.2
     update_min_d: 0.25
     z_hit: 0.5
     z_max: 0.05
     z_rand: 0.5
     z_short: 0.05
-    scan_topic: /scan
+    scan_topic: scan
+    map_topic: map
+    set_initial_pose: false
+    always_reset_initial_pose: false
+    first_map_only: false
+    initial_pose:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      yaw: 0.0
 
 amcl_map_client:
   ros__parameters:
-    use_sim_time: True
+    use_sim_time: False
 
 amcl_rclcpp_node:
   ros__parameters:
-    use_sim_time: True
+    use_sim_time: False
 
 bt_navigator:
   ros__parameters:
-    use_sim_time: True
+    use_sim_time: False
     global_frame: map
     robot_base_frame: root_link
-    odom_topic: /odom
+    odom_topic: odom
     bt_loop_duration: 10
     default_server_timeout: 20
+    wait_for_service_timeout: 1000
     enable_groot_monitoring: True
     groot_zmq_publisher_port: 1666
     groot_zmq_server_port: 1667
+    transform_tolerance: 0.1
+    filter_duration: 0.3
+    service_intropection_mode: "disabled"
+    #default_nav_to_pose_bt_xml: replace/with/path/to/bt.xml # or $(find-pkg-share my_package)/behavior_tree/my_nav_to_pose_bt.xml
+    #default_nav_through_poses_bt_xml: replace/with/path/to/bt.xml # or $(find-pkg-share my_package)/behavior_tree/my_nav_through_poses_bt.xml
+    always_reload_bt_xml: false
+    goal_blackboard_id: goal
+    goals_blackboard_id: goals
+    path_blackboard_id: path
+    waypoint_statuses_blackboard_id: waypoint_statuses
+    navigators: ['navigate_to_pose', 'navigate_through_poses']
+    navigate_to_pose:
+      plugin: "nav2_bt_navigator::NavigateToPoseNavigator" # In Iron and older versions, "/" was used instead of "::"
+      enable_groot_monitoring: false
+      groot_server_port: 1667
+    navigate_through_poses:
+      plugin: "nav2_bt_navigator::NavigateThroughPosesNavigator" # In Iron and older versions, "/" was used instead of "::"
+      enable_groot_monitoring: false
+      groot_server_port: 1669
     # 'default_nav_through_poses_bt_xml' and 'default_nav_to_pose_bt_xml' are use defaults:
     # nav2_bt_navigator/navigate_to_pose_w_replanning_and_recovery.xml
     # nav2_bt_navigator/navigate_through_poses_w_replanning_and_recovery.xml
@@ -105,26 +136,26 @@ bt_navigator:
 
 bt_navigator_rclcpp_node:
   ros__parameters:
-    use_sim_time: True
+    use_sim_time: False
 
 bt_navigator_navigate_through_poses_rclcpp_node:
   ros__parameters:
-    use_sim_time: True
+    use_sim_time: False
 
 bt_navigator_navigate_to_pose_rclcpp_node:
   ros__parameters:
-    use_sim_time: True
+    use_sim_time: False
 
 controller_server:
   ros__parameters:
-    use_sim_time: True
+    use_sim_time: False
     global_frame: "odom"
     robot_base_frame: "root_link"
-    transform_tolerance: 0.5  # Increase if needed
     controller_frequency: 20.0
     min_x_velocity_threshold: 0.001
     min_y_velocity_threshold: 0.5
     min_theta_velocity_threshold: 0.001
+    transform_tolerance: 0.5  # Increase if needed
     failure_tolerance: 0.3
     progress_checker_plugin: "progress_checker"
     goal_checker_plugins: ["general_goal_checker"] # "precise_goal_checker"
@@ -200,12 +231,12 @@ controller_server:
       
 controller_server_rclcpp_node:
   ros__parameters:
-    use_sim_time: True
+    use_sim_time: False
 
 global_costmap:
   global_costmap:
     ros__parameters:
-      use_sim_time: True
+      use_sim_time: False
       footprint_padding: 0.03
       update_frequency: 5.0
       publish_frequency: 1.0
@@ -269,7 +300,7 @@ global_costmap:
         map_subscribe_transient_local: True
         enabled: True
         subscribe_to_updates: True
-        transform_tolerance: 2.0
+        transform_tolerance: 0.5
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         enabled: True
@@ -280,10 +311,10 @@ global_costmap:
       always_send_full_costmap: True
   global_costmap_client:
     ros__parameters:
-      use_sim_time: True
+      use_sim_time: False
   global_costmap_rclcpp_node:
     ros__parameters:
-      use_sim_time: True
+      use_sim_time: False
 
 local_costmap:
   local_costmap:
@@ -292,7 +323,7 @@ local_costmap:
       publish_frequency: 2.0
       global_frame: odom
       robot_base_frame: root_link
-      use_sim_time: True
+      use_sim_time: False
       rolling_window: True
       width: 3
       height: 3
@@ -342,8 +373,8 @@ local_costmap:
         update_footprint_enabled: true
         combination_method:       1     # 1=max, 0=override
         origin_z:                 0.0   # meters
-        publish_voxel_map:        false # default off
-        transform_tolerance:      0.2   # seconds
+        publish_voxel_map:        true # default off
+        transform_tolerance:      0.5   # seconds
         mapping_mode:             false # default off, saves map not for navigation
         map_save_duration:        60.0  # default 60s, how often to autosave
         observation_sources:      rgbd1_mark rgbd1_clear
@@ -354,7 +385,7 @@ local_costmap:
           marking: true
           clearing: false
           obstacle_range: 5.0          # meters
-          min_obstacle_height: 0.5     # default 0, meters
+          min_obstacle_height: -0.5     # default 0, meters
           max_obstacle_height: 5.0     # default 3, meters
           expected_update_rate: 0.0    # default 0, if not updating at this rate at least, remove from buffer
           observation_persistence: 0.0 # default 0, use all measurements taken during now-value, 0=latest
@@ -378,22 +409,22 @@ local_costmap:
       always_send_full_costmap: True
   local_costmap_client:
     ros__parameters:
-      use_sim_time: True
+      use_sim_time: False
   local_costmap_rclcpp_node:
     ros__parameters:
-      use_sim_time: True
+      use_sim_time: False
 
 # The yaml_filename does not need to be specified since it going to be set by defaults in launch.
 # If you'd rather set it in the yaml, remove the default "map" value in the tb3_simulation_launch.py
 # file & provide full path to map below. If CLI map configuration or launch default is provided, that will be used.
 #map_server:
 #  ros__parameters:
-#    use_sim_time: True
+#    use_sim_time: False
 #    yaml_filename: "my_map.yaml"
 
 map_saver:
   ros__parameters:
-    use_sim_time: True
+    use_sim_time: False
     save_map_timeout: 5.0
     free_thresh_default: 0.25
     occupied_thresh_default: 0.65
@@ -402,27 +433,38 @@ map_saver:
 # planner_server:
 #   ros__parameters:
 #     expected_planner_frequency: 20.0
-#     use_sim_time: True
+#     use_sim_time: False
 #     planner_plugins: ["NavFn"]  # ["GridBased"]
 #     NavFn:                      # change plugin name
-#       plugin: "nav2_navfn_planner/NavFnPlanner" # In Iron and older versions, "/" was used instead of "::"
-#       tolerance: 2.0
+#       plugin: "nav2_navfn_planner/NavfnPlanner" # In Iron and older versions, "/" was used instead of "::"
+#       tolerance: 0.5
 #       use_astar: false
 #       allow_unknown: True
 
 planner_server:
   ros__parameters:
     expected_planner_frequency: 20.0
-    use_sim_time: True
+    use_sim_time: False
+    costmap_update_timeout: 1.0
+    service_introspection_mode: "disabled"
     planner_plugins: ["Smac"]
     Smac:
       plugin: "nav2_smac_planner/SmacPlanner2D"
-      tolerance: 2.0
+      tolerance: 0.5
       allow_unknown: True
 
 planner_server_rclcpp_node:
   ros__parameters:
-    use_sim_time: True
+    use_sim_time: False
+
+smoother_server:
+  ros__parameters:
+    smoother_plugins: ["simple_smoother"]
+    simple_smoother:
+      plugin: "nav2_smoother::SimpleSmoother"
+      tolerance: 1.0e-10
+      max_its: 1000
+      do_refinement: True
 
 behavior_server:
   ros__parameters:
@@ -440,18 +482,19 @@ behavior_server:
       plugin: "nav2_behaviors/Wait"
     assisted_teleop:
       plugin: "nav2_behaviors/AssistedTeleop"
-    global_frame: odom
+    local_frame: odom
+    global_frame: map
     robot_base_frame: root_link
     transform_tolerance: 0.1
-    use_sim_time: true
     simulate_ahead_time: 2.0
     max_rotational_vel: 1.0
     min_rotational_vel: 0.4
     rotational_acc_lim: 3.2
+    use_sim_time: False
 
 robot_state_publisher:
   ros__parameters:
-    use_sim_time: True
+    use_sim_time: False
 
 waypoint_follower:
   ros__parameters:
@@ -476,3 +519,34 @@ velocity_smoother:
     odom_duration: 0.1
     deadband_velocity: [0.0, 0.0, 0.0]
     velocity_timeout: 1.0
+
+# collision_monitor:
+#   ros__parameters:
+#     base_frame_id: "base_footprint"
+#     odom_frame_id: "odom"
+#     cmd_vel_in_topic: "cmd_vel_smoothed"
+#     cmd_vel_out_topic: "cmd_vel"
+#     state_topic: "collision_monitor_state"
+#     transform_tolerance: 0.2
+#     source_timeout: 1.0
+#     base_shift_correction: True
+#     stop_pub_timeout: 2.0
+#     # Polygons represent zone around the robot for "stop", "slowdown" and "limit" action types,
+#     # and robot footprint for "approach" action type.
+#     polygons: ["FootprintApproach"]
+#     FootprintApproach:
+#       type: "polygon"
+#       action_type: "approach"
+#       footprint_topic: "/local_costmap/published_footprint"
+#       time_before_collision: 1.2
+#       simulation_time_step: 0.1
+#       min_points: 6
+#       visualize: False
+#       enabled: True
+#     observation_sources: ["scan"]
+#     scan:
+#       type: "scan"
+#       topic: "scan"
+#       min_height: 0.15
+#       max_height: 2.0
+#       enabled: True
