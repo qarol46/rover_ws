@@ -1,5 +1,5 @@
-import os
-from ament_index_python.packages import get_package_share_directory
+import os, yaml
+from ament_index_python.packages import get_package_share_directory, get_package_share_path
 from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription, TimerAction, RegisterEventHandler
 from launch.launch_description_sources import PythonLaunchDescriptionSource
@@ -7,26 +7,19 @@ from launch.event_handlers import OnProcessExit
 from launch_ros.actions import Node
 from launch.substitutions import LaunchConfiguration
 from launch.actions import DeclareLaunchArgument
+from launch.conditions import IfCondition, UnlessCondition
 
 
 def generate_launch_description():
 
     package_name = 'rover_description'
-
-    use_sim_time = DeclareLaunchArgument(
-        'use_sim_time',
-        default_value='true',
-        description='Use simulation (Gazebo) clock if true'
-    )
-
-    use_sim_time_arg = LaunchConfiguration('use_sim_time')
     
     # Запуск rsp.launch.py для публикации robot_description
 
     rsp = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([os.path.join(
             get_package_share_directory(package_name), 'launch', 'rsp.launch.py'
-        )]), launch_arguments={'use_sim_time': use_sim_time_arg, 'use_ros2_control': 'true'}.items()
+        )]), launch_arguments={'use_sim_time': LaunchConfiguration("use_sim_time"), 'use_ros2_control': 'true'}.items()
     )
     
     #joystick = IncludeLaunchDescription(
@@ -53,14 +46,15 @@ def generate_launch_description():
         package='rviz2',
         executable='rviz2',
         arguments=['-d', rviz_config_file],
-        output='screen'
+        output='screen',
+        parameters=[{'use_sim_time': LaunchConfiguration("use_sim_time")}]
     )
 
     twist_mux_params = os.path.join(get_package_share_directory(package_name),'config','twist_mux.yaml')
     twist_mux = Node(
             package="twist_mux",
             executable="twist_mux",
-            parameters=[twist_mux_params, {'use_sim_time': use_sim_time_arg}],
+            parameters=[twist_mux_params, {'use_sim_time': LaunchConfiguration("use_sim_time")}],
             remappings=[('/cmd_vel_out','/diff_cont/cmd_vel_unstamped')]
     )
     
@@ -88,7 +82,7 @@ def generate_launch_description():
                 get_package_share_directory(package_name),
                 "config", "my_controllers.yaml"
             ),
-           {"use_sim_time": use_sim_time_arg}  # Использование симуляционного времени
+           {"use_sim_time": LaunchConfiguration("use_sim_time")}  # Использование симуляционного времени
         ],
         output="screen",
     )
@@ -107,8 +101,71 @@ def generate_launch_description():
         arguments=["diff_cont"]
     )
 
+
+    # Initializing LIDAR - set here for debugging cause there is no nedd to drive robot
+
+    # Firstly point config file and start driver 
+    lidar_parameters_file= os.path.join(get_package_share_directory("real_rover"), 'config', 'VLP16-velodyne_driver_node-params.yaml')
+    VLP_driver= Node(
+        condition=UnlessCondition(LaunchConfiguration("use_sim_time")),
+        package='velodyne_driver',
+        executable='velodyne_driver_node',
+        output='both',
+        parameters=[lidar_parameters_file]
+    )
+    # Secondly start trasform node using original launch file of veodyne project
+    convert_share_dir = get_package_share_path('velodyne_pointcloud')
+    convert_params_file = os.path.join(get_package_share_directory('velodyne_pointcloud'), 'config', 'VLP16-velodyne_transform_node-params.yaml')
+    with open(str(convert_params_file), 'r') as f:
+        convert_params = yaml.safe_load(f)['velodyne_transform_node']['ros__parameters']
+    convert_params['calibration'] = str(convert_share_dir / 'params' / 'VLP16db.yaml')
+    VLP_pointcloud = Node(
+        condition=UnlessCondition(LaunchConfiguration("use_sim_time")),
+        package='velodyne_pointcloud',
+        executable='velodyne_transform_node',
+        output='both',
+        parameters=[convert_params]
+    )
+
+    translate = Node(
+            package='pointcloud_to_laserscan',
+            executable='pointcloud_to_laserscan_node',
+            name='pointcloud_to_laserscan',
+            remappings=[
+                ('/cloud_in', '/velodyne_points'),  # Input pointcloud
+                ('/scan', '/scan') # Output laserscan
+            ],
+            parameters=[{
+                # CRITICAL FIX: Override QoS to match RViz2 requirements
+                'qos_overrides./scan.publisher.reliability': 'reliable',  # Force RELIABLE
+                'qos_overrides./scan.publisher.durability': 'volatile',
+                'qos_overrides./scan.publisher.history': 'keep_last',
+                'qos_overrides./scan.publisher.depth': 10,
+                'use_sim_time': LaunchConfiguration("use_sim_time"),  
+                'allow_undeclared_parameters': False,
+                #'target_frame': 'velodyne',
+                #'transform_tolerance': 0.01,
+                'min_height': -0.5,  # Lowered to detect ground obstacles
+                'max_height': 2.0,
+                'angle_min': -1.5708,  # -M_PI/2
+                'angle_max': 1.5708,  # M_PI/2
+                'angle_increment': 0.01745,  # ~1 degree resolution
+                'scan_time': 0.01,
+                'range_min': 0.9,
+                'range_max': 30.0,
+                'use_inf': True,
+                'inf_epsilon': 1.0
+            }]
+            
+    )
+
     return LaunchDescription([
-        use_sim_time,
+
+        DeclareLaunchArgument(
+            'use_sim_time',
+            default_value='true',
+            description='Use simulation (Gazebo) clock if true'
+        ),
         rsp,
         gazebo,
         #control_node,
@@ -118,5 +175,8 @@ def generate_launch_description():
         #robot_localization_node,
         start_rviz_cmd,
         #joystick,
-        twist_mux
+        twist_mux,
+        VLP_driver,
+        VLP_pointcloud,
+        translate
     ])

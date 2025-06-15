@@ -85,8 +85,8 @@ def generate_launch_description():
                 'qos_overrides./scan.publisher.depth': 10,
                 'use_sim_time': LaunchConfiguration("sim"),  # Explicitly set
                 'allow_undeclared_parameters': False,
-                #'target_frame': 'velodyne',
-                #'transform_tolerance': 0.01,
+                'target_frame': 'velodyne',
+                 'transform_tolerance': 0.01,
                 'min_height': -0.5,  # Lowered to detect ground obstacles
                 'max_height': 2.0,
                 'angle_min': -1.5708,  # -M_PI/2
@@ -114,9 +114,9 @@ def generate_launch_description():
             description='Run rviz'
         ),
 
-        VLP_driver,
-        VLP_pointcloud,
-        translate,
+        #VLP_driver,
+        #VLP_pointcloud,
+        #translate,
 
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(slam_launch_path),

@@ -341,7 +341,7 @@ local_costmap:
         max_obstacle_height: 5.0
         unknown_threshold: 15
         mark_threshold: 0
-        observation_sources: pointcloud
+        observation_sources: pointcloud ground obstacles
         combination_method: 1
         pointcloud:  # no frame set, uses frame from message
           topic: /velodyne_points
@@ -355,6 +355,26 @@ local_costmap:
           clearing: True
           marking: True
           data_type: "PointCloud2"
+        ground:
+          topic: /camera/ground
+          max_obstacle_height: 2.0
+          clearing: True
+          marking: False
+          data_type: "PointCloud2"
+          raytrace_max_range: 3.0
+          raytrace_min_range: 0.0
+          obstacle_max_range: 2.5
+          obstacle_min_range: 0.0
+        obstacles:
+          topic: /camera/obstacles
+          max_obstacle_height: 2.0
+          clearing: True
+          marking: True
+          data_type: "PointCloud2"
+          raytrace_max_range: 3.0
+          raytrace_min_range: 0.0
+          obstacle_max_range: 2.5
+          obstacle_min_range: 0.0
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         enabled: True
@@ -482,8 +502,8 @@ behavior_server:
       plugin: "nav2_behaviors/Wait"
     assisted_teleop:
       plugin: "nav2_behaviors/AssistedTeleop"
-    local_frame: odom
-    global_frame: map
+    #local_frame: odom
+    global_frame: odom
     robot_base_frame: root_link
     transform_tolerance: 0.1
     simulate_ahead_time: 2.0
