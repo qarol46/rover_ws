@@ -60,7 +60,7 @@ def generate_launch_description():
         ),
         
         DeclareLaunchArgument(
-            'localization', default_value='true', choices=['true', 'false'],
+            'localization', default_value='false', choices=['true', 'false'],
             description='Launch rtabmap in localization mode (a map should have been already created).'),
         
         OpaqueFunction(function=launch_setup)
