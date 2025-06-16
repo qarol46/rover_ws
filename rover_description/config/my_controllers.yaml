@@ -1,6 +1,6 @@
 controller_manager:
   ros__parameters:
-    update_rate: 30            # частота обновления контроллеров'
+    update_rate: 100            # частота обновления контроллеров'
     use_sim_time: true
 
     # регистрируем контроллеры
@@ -13,11 +13,11 @@ controller_manager:
 diff_cont:
   ros__parameters:
     odom_frame_id: odom
-    enable_odom_tf: true
-    publish_odom_tf: true
+    enable_odom_tf: false
+    publish_odom_tf: false
     #pose_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]
     #twist_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]
-    open_loop: false
+    #open_loop: false
     # ros__remappings:
     #   - ["odom", "/odom"]
     base_frame_id: root_link
@@ -36,7 +36,7 @@ diff_cont:
     wheel_radius: 0.23
     cmd_vel_timeout: 0.5
     use_stamped_vel: false
-    publish_rate: 50.0 # Hz
+    publish_rate: 100.0 # Defaults to 50
 
 
 #controller_manager:
