@@ -1,16 +1,15 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>odom_fusion</name>
+  <name>odometry_fus</name>
   <version>0.1.0</version>
   <description>Fuses wheel odometry with IMU yaw</description>
 
-  <!-- Обязательные поля -->
-  <maintainer email="your@email.com">Kirill</maintainer>
-  <license>Apache License 2.0</license>  <!-- Или другой (BSD, MIT и т.д.) -->
+  <maintainer email="your@email.com">Your Name</maintainer>
+  <license>Apache License 2.0</license>
 
-  <!-- Зависимости -->
   <buildtool_depend>ament_cmake</buildtool_depend>
+
   <depend>rclcpp</depend>
   <depend>nav_msgs</depend>
   <depend>sensor_msgs</depend>
@@ -18,7 +17,6 @@
   <depend>tf2_ros</depend>
   <depend>tf2_geometry_msgs</depend>
 
-  <!-- Опциональные теги для тестирования -->
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 </package>

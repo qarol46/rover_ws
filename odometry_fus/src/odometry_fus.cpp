@@ -5,11 +5,12 @@
 #include "tf2_ros/transform_broadcaster.h"
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2/LinearMath/Matrix3x3.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include <cmath>
 
 class OdomFusion : public rclcpp::Node {
 public:
-  OdomFusion() : Node("odom_fusion"), first_message_(true) {
+  OdomFusion() : Node("odom_fusion") {
     // Параметры
     declare_parameter("odom_topic", "/diff_cont/odom");
     declare_parameter("imu_topic", "/imu");
@@ -17,16 +18,13 @@ public:
     declare_parameter("child_frame", "root_link");
     declare_parameter("world_frame", "odom");
     declare_parameter("publish_tf", true);
-    declare_parameter("min_movement", 0.001);
-    declare_parameter("min_rotation", 0.017);
-    declare_parameter("max_speed", 2.0);
+    declare_parameter("min_speed", 0.01);
 
     // Инициализация
     last_position_.x = 0.0;
     last_position_.y = 0.0;
     last_position_.z = 0.0;
     current_yaw_ = 0.0;
-    last_yaw_rate_ = 0.0;
 
     // Подписки
     odom_sub_ = create_subscription<nav_msgs::msg::Odometry>(
@@ -46,7 +44,6 @@ public:
 
 private:
   void imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg) {
-    // Получаем yaw и угловую скорость
     tf2::Quaternion q(
       msg->orientation.x,
       msg->orientation.y,
@@ -55,9 +52,7 @@ private:
     tf2::Matrix3x3 m(q);
     double roll, pitch, yaw;
     m.getRPY(roll, pitch, yaw);
-    
     current_yaw_ = yaw;
-    last_yaw_rate_ = msg->angular_velocity.z;
   }
 
   void odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg) {
@@ -67,40 +62,32 @@ private:
       return;
     }
 
-    // Получаем параметры
-    double min_movement = get_parameter("min_movement").as_double();
-    double min_rotation = get_parameter("min_rotation").as_double();
-    double max_speed = get_parameter("max_speed").as_double();
+    static rclcpp::Time last_time = msg->header.stamp;
+    rclcpp::Time current_time = msg->header.stamp;
+    double dt = (current_time - last_time).seconds();
+    last_time = current_time;
 
-    // 1. Проверяем угловую скорость
-    bool is_rotating = (fabs(last_yaw_rate_) > min_rotation);
+    if (dt <= 0) return;
 
-    // 2. Вычисляем модуль перемещения
-    double dx = msg->pose.pose.position.x - last_position_.x;
-    double dy = msg->pose.pose.position.y - last_position_.y;
-    double ds = std::hypot(dx, dy);
-
-    // 3. Фильтрация перемещения
-    if (ds < min_movement) {
-      ds = 0.0; // Игнорируем микро-перемещения
-    }
-
-    // 4. Вычисляем модуль скорости
+    // 1. Получаем скорости из одометрии
     double vx = msg->twist.twist.linear.x;
     double vy = msg->twist.twist.linear.y;
-    double speed_module = std::min(std::hypot(vx, vy), max_speed);
+    double speed_module = std::hypot(vx, vy);
 
-    // 5. Обновляем позицию только если есть значимое движение или вращение
-    if (ds > 0 || is_rotating) {
-      last_position_.x += ds * std::cos(current_yaw_);
-      last_position_.y += ds * std::sin(current_yaw_);
+    // 2. Фильтрация скорости
+    if (speed_module < get_parameter("min_speed").as_double()) {
+      speed_module = 0.0;
     }
 
-    // 6. Корректируем скорость
+    // 3. Проецируем скорость на текущий yaw от IMU
     double corrected_vx = speed_module * std::cos(current_yaw_);
     double corrected_vy = speed_module * std::sin(current_yaw_);
 
-    // 7. Создаем сообщение
+    // 4. Интегрируем скорость для получения позиции
+    last_position_.x += corrected_vx * dt;
+    last_position_.y += corrected_vy * dt;
+
+    // 5. Публикация odometry
     auto new_odom = nav_msgs::msg::Odometry(*msg);
     new_odom.header.frame_id = get_parameter("world_frame").as_string();
     new_odom.child_frame_id = get_parameter("child_frame").as_string();
@@ -119,7 +106,7 @@ private:
 
     odom_pub_->publish(new_odom);
 
-    // 8. Публикация TF
+    // 6. Публикация TF
     if (get_parameter("publish_tf").as_bool()) {
       geometry_msgs::msg::TransformStamped transform;
       transform.header = new_odom.header;
@@ -132,7 +119,6 @@ private:
     }
   }
 
-  // Члены класса
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
@@ -140,9 +126,9 @@ private:
   
   geometry_msgs::msg::Point last_position_;
   double current_yaw_;
-  double last_yaw_rate_;
-  bool first_message_;
+  bool first_message_ = true;
 };
+
 
 int main(int argc, char** argv) {
   rclcpp::init(argc, argv);

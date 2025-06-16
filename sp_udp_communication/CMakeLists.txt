@@ -10,6 +10,11 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 
 # Include directories
 include_directories(
@@ -33,6 +38,19 @@ target_include_directories(udp_manipulator PUBLIC
 add_executable(udp_robot_server
   src/udp_robot_server.cpp
 )
+
+add_executable(odometry_fus_node
+  src/odometry_fus.cpp
+)
+ament_target_dependencies(odometry_fus_node
+  rclcpp
+  nav_msgs
+  sensor_msgs
+  geometry_msgs
+  tf2_ros
+  tf2_geometry_msgs
+)
+
 ament_target_dependencies(udp_robot_server
   rclcpp
   rclcpp_components
@@ -58,6 +76,10 @@ install(TARGETS
   udp_manipulator
   udp_robot_server
   udp_controller_client
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(TARGETS odometry_fus_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
