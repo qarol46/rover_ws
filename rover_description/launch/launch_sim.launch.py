@@ -60,10 +60,11 @@ def generate_launch_description():
     
     # Запуск Gazebo
     gazebo_world_file = os.path.join(get_package_share_directory(package_name),'worlds','gas_station.world')
+    gazebo_params_file = os.path.join(get_package_share_directory(package_name),'config','gazebo_params.yaml')
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([os.path.join(
             get_package_share_directory('gazebo_ros'), 'launch', 'gazebo.launch.py')]),
-            launch_arguments={'world': gazebo_world_file}.items()
+            launch_arguments={'world': gazebo_world_file, 'extra_gazebo_args': '--ros-args --params-file ' + gazebo_params_file}.items()
     )
     # Спавн робота в Gazebo
     spawn_entity = Node(
@@ -168,7 +169,7 @@ def generate_launch_description():
         ),
         rsp,
         gazebo,
-        #control_node,
+        control_node,
         spawn_entity,
         diff_drive_spawner,
         joint_broad_spawner,
