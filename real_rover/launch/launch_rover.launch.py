@@ -136,37 +136,37 @@ def generate_launch_description():
             #launch_arguments={'params_file': nav2_config_file}.items()
     )
     
-    # translate = Node(
-    #         package='pointcloud_to_laserscan',
-    #         executable='pointcloud_to_laserscan_node',
-    #         name='pointcloud_to_laserscan',
-    #         remappings=[
-    #             ('/cloud_in', '/velodyne_points'),  # Input pointcloud
-    #             ('/scan', '/scan') # Output laserscan
-    #         ],
-    #         parameters=[{
-    #             # CRITICAL FIX: Override QoS to match RViz2 requirements
-    #             'qos_overrides./scan.publisher.reliability': 'reliable',  # Force RELIABLE
-    #             'qos_overrides./scan.publisher.durability': 'volatile',
-    #             'qos_overrides./scan.publisher.history': 'keep_last',
-    #             'qos_overrides./scan.publisher.depth': 10,
-    #             'use_sim_time': False,  # Explicitly set
-    #             'allow_undeclared_parameters': False,
-    #             #'target_frame': 'laserscan',
-    #             'transform_tolerance': 0.01,
-    #             'min_height': -0.5,  # Lowered to detect ground obstacles
-    #             'max_height': 2.0,
-    #             'angle_min': -1.5708,  # -M_PI/2
-    #             'angle_max': 1.5708,  # M_PI/2
-    #             'angle_increment': 0.01745,  # ~1 degree resolution
-    #             'scan_time': 0.01,
-    #             'range_min': 0.9,
-    #             'range_max': 30.0,
-    #             'use_inf': True,
-    #             'inf_epsilon': 1.0
-    #         }]
+    translate = Node(
+            package='pointcloud_to_laserscan',
+            executable='pointcloud_to_laserscan_node',
+            name='pointcloud_to_laserscan',
+            remappings=[
+                ('/cloud_in', '/velodyne_points'),  # Input pointcloud
+                ('/scan', '/scan') # Output laserscan
+            ],
+            parameters=[{
+                # CRITICAL FIX: Override QoS to match RViz2 requirements
+                'qos_overrides./scan.publisher.reliability': 'reliable',  # Force RELIABLE
+                'qos_overrides./scan.publisher.durability': 'volatile',
+                'qos_overrides./scan.publisher.history': 'keep_last',
+                'qos_overrides./scan.publisher.depth': 10,
+                'use_sim_time': False,  # Explicitly set
+                'allow_undeclared_parameters': False,
+                #'target_frame': 'laserscan',
+                #'transform_tolerance': 0.01,
+                'min_height': -0.5,  # Lowered to detect ground obstacles
+                'max_height': 2.0,
+                'angle_min': -1.5708,  # -M_PI/2
+                'angle_max': 1.5708,  # M_PI/2
+                'angle_increment': 0.01745,  # ~1 degree resolution
+                'scan_time': 0.01,
+                'range_min': 0.9,
+                'range_max': 30.0,
+                'use_inf': True,
+                'inf_epsilon': 1.0
+            }]
             
-    # )
+    )
     return LaunchDescription([
         rsp,
         start_rviz_cmd,
@@ -175,9 +175,9 @@ def generate_launch_description():
         delay_joint_broad_spawner,
         #joystick,
         twist_mux,
-        #VLP_driver,
-        #VLP_pointcloud,
-        #translate,
+        VLP_driver,
+        VLP_pointcloud,
+        translate,
         #slam,
         #nav2
     ])
