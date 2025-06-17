@@ -25,6 +25,11 @@ find_package(ros2_control_wheeled_robot_hardware REQUIRED)
 ament_export_dependencies(
   ros2_control_wheeled_robot_hardware
 )
+
+ament_export_dependencies(
+  sp_udp_communication
+)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights

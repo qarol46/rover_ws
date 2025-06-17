@@ -108,6 +108,12 @@ def generate_launch_description():
         arguments=["diff_cont"]
     )
 
+    odometry_fus_node = Node(
+            package='sp_udp_communication',
+            executable='odometry_fus_node',
+            name='odometry_fus_node',        
+            output='screen',            
+    )
     return LaunchDescription([
         use_sim_time,
         rsp,
@@ -116,6 +122,7 @@ def generate_launch_description():
         spawn_entity,
         diff_drive_spawner,
         joint_broad_spawner,
+        odometry_fus_node,
         #robot_localization_node,
         start_rviz_cmd,
         #joystick,
