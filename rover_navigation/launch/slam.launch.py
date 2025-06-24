@@ -22,6 +22,8 @@ from launch.substitutions import EnvironmentVariable
 from launch_ros.substitutions import FindPackageShare
 from launch_ros.actions import Node
 from launch.conditions import IfCondition, UnlessCondition
+import os
+from ament_index_python.packages import get_package_share_directory, get_package_share_path
 
 
 package_name = 'rover_navigation'

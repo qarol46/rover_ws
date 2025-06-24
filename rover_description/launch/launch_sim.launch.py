@@ -22,11 +22,11 @@ def generate_launch_description():
         )]), launch_arguments={'use_sim_time': LaunchConfiguration("use_sim_time"), 'use_ros2_control': 'true'}.items()
     )
     
-    #joystick = IncludeLaunchDescription(
-    #            PythonLaunchDescriptionSource([os.path.join(
-    #                get_package_share_directory(package_name),'launch','joystick.launch.py'
-    #            )]), launch_arguments={'use_sim_time': 'true'}.items()
-    #)
+    joystick = IncludeLaunchDescription(
+               PythonLaunchDescriptionSource([os.path.join(
+                   get_package_share_directory(package_name),'launch','joystick.launch.py'
+               )]), launch_arguments={'use_sim_time': 'true'}.items()
+    )
 
     ekf_config = os.path.join(get_package_share_directory(package_name), 'config', 'ekf.yaml')
     robot_localization_node = Node(
@@ -34,7 +34,7 @@ def generate_launch_description():
         executable='ekf_node',
         name='ekf_filter_node',
         output='screen',
-        parameters=[ekf_config, {'use_sim_time': use_sim_time_arg}],
+        parameters=[ekf_config, {'use_sim_time': LaunchConfiguration("use_sim_time")}],
         remappings=[('odometry/filtered', 'odom')],
     )
 
@@ -158,7 +158,7 @@ def generate_launch_description():
                 'angle_max': 1.5708,  # M_PI/2
                 'angle_increment': 0.01745,  # ~1 degree resolution
                 'scan_time': 0.01,
-                'range_min': 0.9,
+                'range_min': 0.1,
                 'range_max': 30.0,
                 'use_inf': True,
                 'inf_epsilon': 1.0
