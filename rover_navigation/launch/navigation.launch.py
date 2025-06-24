@@ -38,9 +38,9 @@ def generate_launch_description():
         [FindPackageShare(package_name), 'rviz', 'rover_navigation.rviz']
     )
 
-    # default_map_path = PathJoinSubstitution(
-    #     [FindPackageShare(package_name), 'maps', f'{MAP_NAME}.yaml']
-    # )
+    default_map_path = PathJoinSubstitution(
+        [FindPackageShare(package_name), 'maps', f'{MAP_NAME}.yaml']
+    )
 
     nav2_config_path = PathJoinSubstitution(
         [FindPackageShare(package_name), 'config', 'navigation.yaml']
@@ -96,7 +96,7 @@ def generate_launch_description():
         #         'use_sim_time': LaunchConfiguration("sim"),
         #         'params_file': nav2_sim_config_path
         #     }.items()
-        # ),
+        # )
 
         # Node(
         #     package='rviz2',

@@ -59,7 +59,10 @@ amcl_rclcpp_node:
     use_sim_time: True
 
 bt_navigator:
+  bt_navigator:
   ros__parameters:
+    default_nav_to_pose_bt_xml: "nav2_bt_navigator/navigate_to_pose_w_replanning_and_recovery.xml"
+    default_nav_through_poses_bt_xml: "nav2_bt_navigator/navigate_through_poses_w_replanning_and_recovery.xml"
     use_sim_time: True
     global_frame: map
     robot_base_frame: root_link
@@ -430,28 +433,28 @@ map_saver:
     occupied_thresh_default: 0.65
     map_subscribe_transient_local: True
 
-# planner_server:
-#   ros__parameters:
-#     expected_planner_frequency: 20.0
-#     use_sim_time: True
-#     planner_plugins: ["NavFn"]  # ["GridBased"]
-#     NavFn:                      # change plugin name
-#       plugin: "nav2_navfn_planner/NavfnPlanner" # In Iron and older versions, "/" was used instead of "::"
-#       tolerance: 0.5
-#       use_astar: false
-#       allow_unknown: True
-
 planner_server:
   ros__parameters:
     expected_planner_frequency: 20.0
     use_sim_time: True
-    costmap_update_timeout: 1.0
-    service_introspection_mode: "disabled"
-    planner_plugins: ["Smac"]
-    Smac:
-      plugin: "nav2_smac_planner/SmacPlanner2D"
+    planner_plugins: ["NavFn"]  # ["GridBased"]
+    NavFn:                      # change plugin name
+      plugin: "nav2_navfn_planner/NavfnPlanner" # In Iron and older versions, "/" was used instead of "::"
       tolerance: 0.5
+      use_astar: false
       allow_unknown: True
+
+# planner_server:
+#   ros__parameters:
+#     expected_planner_frequency: 20.0
+#     use_sim_time: True
+#     costmap_update_timeout: 1.0
+#     service_introspection_mode: "disabled"
+#     planner_plugins: ["Smac"]
+#     Smac:
+#       plugin: "nav2_smac_planner/SmacPlanner2D"
+#       tolerance: 0.5
+#       allow_unknown: True
 
 planner_server_rclcpp_node:
   ros__parameters:
@@ -485,7 +488,7 @@ behavior_server:
     local_frame: odom
     global_frame: map
     robot_base_frame: root_link
-    transform_tolerance: 0.1
+    transform_tolerance: 0.5
     simulate_ahead_time: 2.0
     max_rotational_vel: 1.0
     min_rotational_vel: 0.4
