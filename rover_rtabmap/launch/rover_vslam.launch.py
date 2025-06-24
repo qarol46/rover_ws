@@ -51,15 +51,15 @@ def launch_setup(context, *args, **kwargs):
     # )
 
     vslam_params ={
-        'frame_id':'base_link',
+        'frame_id':'root_link',
         'guess_frame_id':'odom',
-        'approx_sync': False,
+        'approx_sync': True,
         'use_sim_time':use_sim_time,
         'subscribe_rgbd':True,
         'subscribe_odom_info':True,
         'use_action_for_goal':True,
-        'wait_imu_to_init': use_imu,
-        'wait_for_transform': 0.5,
+        'wait_imu_to_init': False, #use_imu,
+        'wait_for_transform': 0.1,
         # RTAB-Map's parameters should be strings
         'Grid/DepthDecimation': '1',
         'Grid/RangeMax': '2',
@@ -69,28 +69,28 @@ def launch_setup(context, *args, **kwargs):
         'Odom/ResetCountdown': '2', # sim is very flaky
         'Kp/RoiRatios': '0.0 0.0 0.0 0.4' # ignore ground for loop closure detection (sim uses a very repetitive texture)
     }
-    vslam_remappings=[('imu', 'imu/data/filtered'),
+    vslam_remappings=[('imu', 'imu'),
                       ('odom', 'vo')]
     
     return [
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(navigation_launch_path),
-            launch_arguments={
-                'use_sim_time': use_sim_time,
-                'params_file': nav2_params_file_sim
-            }.items()
-        ),
+    #     IncludeLaunchDescription(
+    #         PythonLaunchDescriptionSource(navigation_launch_path),
+    #         launch_arguments={
+    #             'use_sim_time': use_sim_time,
+    #             'params_file': nav2_params_file_sim
+    #         }.items()
+    #     ),
         
-        # # compute imu orientation
+        # compute imu orientation
         # Node(
         #     package='imu_filter_madgwick', executable='imu_filter_madgwick_node', output='screen',
         #     parameters=[{
         #       'use_mag':False,
-        #       'world_frame':'enu',
+        #       'world_frame':'map',
         #       'publish_tf':False}],
         #     remappings=[
         #         ('imu/data_raw', 'imu/data'),
-        #         ('imu/data', 'imu/data/filtered')]
+        #         ('imu/data', 'imu')]
         #     ),
         
         # VSLAM nodes:
@@ -107,7 +107,7 @@ def launch_setup(context, *args, **kwargs):
             remappings=vslam_remappings,
             arguments=["--ros-args", "--log-level", 'info']),
 
-        # SLAM Mode:
+        # # SLAM Mode:
         Node(
             condition=UnlessCondition(localization),
             package='rtabmap_slam', executable='rtabmap', output='screen',
@@ -155,7 +155,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument(
             name='use_sim_time', 
-            default_value='false',
+            default_value='true',
             description='Enable use_sime_time to true'
         ),
 
