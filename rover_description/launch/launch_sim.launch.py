@@ -108,11 +108,13 @@ def generate_launch_description():
         arguments=["diff_cont"]
     )
 
+    odometry_fus_config = os.path.join(get_package_share_directory(package_name), 'config', 'odometry_fus.yaml')
     odometry_fus_node = Node(
             package='sp_udp_communication',
             executable='odometry_fus_node',
             name='odometry_fus_node',        
-            output='screen',            
+            output='screen',          
+            parameters=[odometry_fus_config]   
     )
     return LaunchDescription([
         use_sim_time,
