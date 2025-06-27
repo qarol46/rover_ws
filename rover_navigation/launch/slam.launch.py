@@ -30,21 +30,27 @@ package_name = 'rover_navigation'
 
 def generate_launch_description():
 
-    slam_config_file = os.path.join(get_package_share_directory(package_name), 'config', 'slam.yaml')
-    slam = Node(
-    package='slam_toolbox',
-    executable='async_slam_toolbox_node',
-    name='slam_toolbox',
-    output='screen',
-    parameters=[
-        slam_config_file,
-        {
-            'use_sim_time': LaunchConfiguration("sim"),
+    use_sim_time = LaunchConfiguration('use_sim_time')
+    slam_params_file = LaunchConfiguration('slam_params_file')
 
-        }
-    ],
-    remappings=[('scan', '/scan')]
-    )
+    declare_use_sim_time_argument = DeclareLaunchArgument(
+        name='use_sim_time',
+        default_value='false',
+        description='Use simulation/Gazebo clock')
+    declare_slam_params_file_cmd = DeclareLaunchArgument(
+        'slam_params_file',
+        default_value=os.path.join(get_package_share_directory(package_name), 'config', 'slam.yaml'),
+        description='Full path to the ROS2 parameters file to use for the slam_toolbox node')
+
+    start_async_slam_toolbox_node = Node(
+        parameters=[
+          slam_params_file,
+          {'use_sim_time': use_sim_time}
+        ],
+        package='slam_toolbox',
+        executable='async_slam_toolbox_node',
+        name='slam_toolbox',
+        output='screen')
 
     translate = Node(
             package='pointcloud_to_laserscan',
@@ -80,12 +86,6 @@ def generate_launch_description():
 
     return LaunchDescription([
         DeclareLaunchArgument(
-            name='sim', 
-            default_value='true',
-            description='Enable use_sime_time to true'
-        ),
-
-        DeclareLaunchArgument(
             name='rviz', 
             default_value='false',
             description='Run rviz'
@@ -95,5 +95,7 @@ def generate_launch_description():
         #VLP_pointcloud,
         #translate,
 
-        slam
+        declare_use_sim_time_argument,
+        declare_slam_params_file_cmd,
+        start_async_slam_toolbox_node
     ])
