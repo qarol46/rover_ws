@@ -19,6 +19,11 @@ def generate_launch_description():
         )]), launch_arguments={'use_sim_time': 'false', 'use_ros2_control': 'true'}.items()
     )
 
+    xsens_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([os.path.join(
+                get_package_share_directory('bluespace_ai_xsens_mti_driver'), 'launch', 'xsens_mti_node.launch.py')
+        ])
+    )
     robot_description = Command(['xacro ', os.path.join(get_package_share_directory(package_name), 'urdf', 'trk211.xacro')])
     
     controller_params_file = os.path.join(get_package_share_directory(package_name),'config','controllers.yaml')
@@ -82,14 +87,22 @@ def generate_launch_description():
             on_start=[joint_broad_spawner],
         )
     )
-    
+
+    odometry_fus_config = os.path.join(get_package_share_directory(package_name), 'config', 'odometry_fus.yaml')
+    odometry_fus_node = Node(
+            package='sp_udp_communication',
+            executable='odometry_fus_node',
+            name='odometry_fus_node',        
+            output='screen',
+            parameters=[odometry_fus_config]             
+    )
     # I prefer to use singe launch file for project, so
     # teleop_launch = IncludeLaunchDescription(
     #     PythonLaunchDescriptionSource([os.path.join(
     #         get_package_share_directory('real_rover'), 'launch', 'teleop.launch.py')])   
     # )
 
-
+    
     # Initializing LIDAR - set here for debugging cause there is no nedd to drive robot
 
     # Firstly point config file and start driver 
@@ -175,6 +188,8 @@ def generate_launch_description():
         delay_joint_broad_spawner,
         #joystick,
         twist_mux,
+        xsens_launch,
+        odometry_fus_node,
         VLP_driver,
         VLP_pointcloud,
         translate,

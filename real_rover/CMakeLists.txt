@@ -13,6 +13,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(ros2_control_wheeled_robot_hardware REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)  # Добавлена новая зависимость
+find_package(bluespace_ai_xsens_mti_driver REQUIRED)
 
 install(
   DIRECTORY config launch meshes urdf
