@@ -13,6 +13,8 @@ diff_cont:
   ros__parameters: 
     odom_frame_id: odom
     base_frame_id: root_link
+    enable_odom_tf: false
+    publish_odom_tf: false
     left_wheel_names: 
       - "base_to_left_forward_wheel"
       - "base_to_left_middle_wheel"
