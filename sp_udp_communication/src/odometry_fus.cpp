@@ -168,7 +168,6 @@ private:
   double imu_yaw_offset_;
   rclcpp::Time angular_speed_zero_time_;
   bool is_first_imu_;
-  bool is_turning_;
 };
 
 int main(int argc, char** argv) {
