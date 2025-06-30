@@ -13,19 +13,26 @@ public:
   OdomFusion() : Node("odometry_fus"), current_direction_(1.0) {
     // Параметры
     declare_parameter("odom_topic", "/diff_cont/odom");
-    declare_parameter("imu_topic", "/imu");
+    declare_parameter("imu_topic", "/imu/data");
     declare_parameter("output_topic", "/odom");
     declare_parameter("child_frame", "root_link");
     declare_parameter("world_frame", "odom");
     declare_parameter("publish_tf", true);
     declare_parameter("min_speed", 0.001);
-    declare_parameter("direction_threshold", 0.5); // порог для определения направления
+    declare_parameter("direction_threshold", 0.5);
+    declare_parameter("min_angular_speed", 0.0005); // минимальная угловая скорость для обновления
+    declare_parameter("angle_change_threshold", 0.02); // порог изменения угла для фильтрации
 
     // Инициализация
     last_position_.x = 0.0;
     last_position_.y = 0.0;
     last_position_.z = 0.0;
     current_yaw_ = 0.0;
+    last_imu_yaw_ = 0.0;
+    last_valid_imu_yaw_ = 0.0;
+    angular_speed_zero_time_ = this->now();
+    imu_yaw_offset_ = 0.0;
+    is_first_imu_ = true;
 
     // Подписки
     odom_sub_ = create_subscription<nav_msgs::msg::Odometry>(
@@ -53,7 +60,21 @@ private:
     tf2::Matrix3x3 m(q);
     double roll, pitch, yaw;
     m.getRPY(roll, pitch, yaw);
-    current_yaw_ = yaw;
+    
+    if (is_first_imu_) {
+      last_imu_yaw_ = yaw;
+      last_valid_imu_yaw_ = yaw;
+      imu_yaw_offset_ = yaw;
+      is_first_imu_ = false;
+      return;
+    }
+    
+    // Фильтрация мелких изменений
+    double yaw_diff = yaw - last_imu_yaw_;
+    if (fabs(yaw_diff) > get_parameter("angle_change_threshold").as_double()) {
+      last_valid_imu_yaw_ = yaw;
+    }
+    last_imu_yaw_ = yaw;
   }
 
   void odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg) {
@@ -64,10 +85,25 @@ private:
 
     if (dt <= 0) return;
 
-    tf2::Quaternion q_odom;
-    tf2::fromMsg(msg->pose.pose.orientation, q_odom);
-    double roll, pitch, yaw_odom;
-    tf2::Matrix3x3(q_odom).getRPY(roll, pitch, yaw_odom);
+    // Получаем угловую скорость из одометрии
+    double angular_speed = msg->twist.twist.angular.z;
+    
+    // Интегрируем угловую скорость из одометрии
+    current_yaw_ += angular_speed * dt;
+    
+    // Корректируем угол по IMU только при значительном вращении
+    double abs_angular_speed = fabs(angular_speed);
+    if (abs_angular_speed > get_parameter("min_angular_speed").as_double()) {
+      double yaw_diff = last_valid_imu_yaw_ - imu_yaw_offset_;
+      current_yaw_ = yaw_diff; // Используем угол от IMU
+      imu_yaw_offset_ = last_valid_imu_yaw_;
+      angular_speed_zero_time_ = this->now();
+    }
+    
+    // Если долгое время не было вращения, сбрасываем offset IMU
+    if ((this->now() - angular_speed_zero_time_).seconds() > 1.0) {
+      imu_yaw_offset_ = last_valid_imu_yaw_;
+    }
 
     // 1. Получаем скорости из одометрии
     double vx = msg->twist.twist.linear.x;
@@ -75,10 +111,7 @@ private:
     double speed_module = std::hypot(vx, vy);
 
     // 2. Автоматическое определение направления
-    double speed_angle = atan2(vy, vx);
-    double angle_diff = atan2(sin(speed_angle - yaw_odom), cos(speed_angle - yaw_odom));
     current_direction_ = (vx >= 0) ? 1.0 : -1.0;
-    RCLCPP_INFO(get_logger(), "Current direction: %f", current_direction_);
 
     // 3. Фильтрация скорости
     if (speed_module < get_parameter("min_speed").as_double()) {
@@ -125,6 +158,7 @@ private:
     }
   }
 
+  // Переменные-члены класса
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
@@ -132,7 +166,14 @@ private:
   
   geometry_msgs::msg::Point last_position_;
   double current_yaw_;
-  double current_direction_; // 1.0 - вперед, -1.0 - назад
+  double current_direction_;
+  
+  // Переменные для обработки ориентации
+  double last_imu_yaw_;
+  double last_valid_imu_yaw_;
+  double imu_yaw_offset_;
+  rclcpp::Time angular_speed_zero_time_;
+  bool is_first_imu_;
 };
 
 int main(int argc, char** argv) {
