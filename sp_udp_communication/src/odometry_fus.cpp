@@ -20,8 +20,8 @@ public:
     declare_parameter("publish_tf", true);
     declare_parameter("min_speed", 0.001);
     declare_parameter("direction_threshold", 0.5);
-    declare_parameter("min_angular_speed", 0.0005); // минимальная угловая скорость для обновления
-    declare_parameter("angle_change_threshold", 0.02); // порог изменения угла для фильтрации
+    declare_parameter("min_angular_speed", 0.005); // минимальная угловая скорость для обновления
+    declare_parameter("angle_change_threshold", 0.0005); // порог изменения угла для фильтрации
 
     // Инициализация
     last_position_.x = 0.0;
@@ -89,22 +89,16 @@ private:
     double angular_speed = msg->twist.twist.angular.z;
     
     // Интегрируем угловую скорость из одометрии
-    current_yaw_ += angular_speed * dt;
+    //current_yaw_ += angular_speed * dt;
     
     // Корректируем угол по IMU только при значительном вращении
     double abs_angular_speed = fabs(angular_speed);
     if (abs_angular_speed > get_parameter("min_angular_speed").as_double()) {
       double yaw_diff = last_valid_imu_yaw_ - imu_yaw_offset_;
-      current_yaw_ = yaw_diff; // Используем угол от IMU
+      current_yaw_ += yaw_diff; // Используем угол от IMU
       imu_yaw_offset_ = last_valid_imu_yaw_;
-      angular_speed_zero_time_ = this->now();
     }
     
-    // Если долгое время не было вращения, сбрасываем offset IMU
-    if ((this->now() - angular_speed_zero_time_).seconds() > 1.0) {
-      imu_yaw_offset_ = last_valid_imu_yaw_;
-    }
-
     // 1. Получаем скорости из одометрии
     double vx = msg->twist.twist.linear.x;
     double vy = msg->twist.twist.linear.y;

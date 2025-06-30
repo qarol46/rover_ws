@@ -173,9 +173,9 @@ def generate_launch_description():
                 'angle_max': 1.5708,  # M_PI/2
                 'angle_increment': 0.01745,  # ~1 degree resolution
                 'scan_time': 0.01,
-                'range_min': 0.9,
-                'range_max': 30.0,
-                'use_inf': True,
+                'range_min': 0.1,
+                'range_max': 25.0,
+                'use_inf': False,
                 'inf_epsilon': 1.0
             }]
             
