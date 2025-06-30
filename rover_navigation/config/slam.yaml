@@ -1,12 +1,10 @@
 slam_toolbox:
   ros__parameters:
-
     # Plugin params
     solver_plugin: solver_plugins::CeresSolver
     ceres_linear_solver: SPARSE_NORMAL_CHOLESKY
     ceres_preconditioner: SCHUR_JACOBI
     ceres_trust_strategy: LEVENBERG_MARQUARDT
-    ceres_dogleg_type: TRADITIONAL_DOGLEG
     ceres_loss_function: None
 
     # ROS Parameters
@@ -43,6 +41,7 @@ slam_toolbox:
 
     # General Parameters
     use_scan_matching: false
+    do_loop_closing: false
     use_scan_barycenter: false
     minimum_travel_distance: 0.6
     minimum_travel_heading: 0.2

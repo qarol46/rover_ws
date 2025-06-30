@@ -1,0 +1,9 @@
+odom_fusion:
+  ros__parameters:
+    odom_topic: "/diff_cont/odom"  
+    imu_topic: "/imu"              
+    output_topic: "/odom"          
+    child_frame: "root_link"       
+    world_frame: "odom"            
+    publish_tf: true               #Публиковать tf
+    min_speed: 0.01                #Минимальная скорость, при которой будет обновляться odom
