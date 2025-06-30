@@ -90,11 +90,11 @@ def generate_launch_description():
 
     odometry_fus_config = os.path.join(get_package_share_directory(package_name), 'config', 'odometry_fus.yaml')
     odometry_fus_node = Node(
-            package='sp_udp_communication',
+            package='odometry_fus',
             executable='odometry_fus_node',
             name='odometry_fus_node',        
             output='screen',
-            parameters=[odometry_fus_config]             
+            parameters=[odometry_fus_config],           
     )
     # I prefer to use singe launch file for project, so
     # teleop_launch = IncludeLaunchDescription(

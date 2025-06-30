@@ -103,7 +103,7 @@ def generate_launch_description():
     )
 
     odometry_fus_node = Node(
-            package='sp_udp_communication',
+            package='odometry_fus',
             executable='odometry_fus_node',
             name='odometry_fus_node',        
             output='screen',            

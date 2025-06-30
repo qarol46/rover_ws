@@ -1,0 +1,19 @@
+odometry_fus:
+  ros__parameters:
+    odom_topic: "/diff_cont/odom"
+    imu_topic: "/imu"
+    output_topic: "/odom"
+    
+    child_frame: "root_link"
+    world_frame: "odom"
+    
+    publish_tf: true
+
+    min_speed: 0.001           # минимальная скорость для учета движения (м/с)
+    direction_threshold: 0.5   # порог для определения направления движения
+    
+    min_angular_speed: 0.005   # минимальная угловая скорость для обновления (рад/с)
+    angle_change_threshold: 0.0005  # порог для фильтрации малого изменения угла
+    max_angle_difference: 0.05 # отсечка дрейфа иму при повороте после протяжённого прямолинейного участка
+  
+    moving_average_window: 5   # размер окна для скользящего среднего (кол-во измерений)
