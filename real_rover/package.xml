@@ -19,6 +19,8 @@
   <depend>xacro</depend>
   <depend>rclcpp_lifecycle</depend>
 
+  <exec_depend>bluespace_ai_xsens_mti_driver</exec_depend>
+  
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 

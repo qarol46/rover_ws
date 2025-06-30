@@ -29,28 +29,6 @@ package_name = 'rover_navigation'
 def generate_launch_description():
 
 
-    # Initializing LIDAR - set here for debugging cause there is no nedd to drive robot
-
-    # Firstly point config file and start driver 
-    lidar_parameters_file= os.path.join(get_package_share_directory("real_rover"), 'config', 'VLP16-velodyne_driver_node-params.yaml')
-    VLP_driver= Node(
-        package='velodyne_driver',
-        executable='velodyne_driver_node',
-        output='both',
-        parameters=[lidar_parameters_file]
-    )
-    # Secondly start trasform node using original launch file of veodyne project
-    convert_share_dir = get_package_share_path('velodyne_pointcloud')
-    convert_params_file = os.path.join(get_package_share_directory('velodyne_pointcloud'), 'config', 'VLP16-velodyne_transform_node-params.yaml')
-    with open(str(convert_params_file), 'r') as f:
-        convert_params = yaml.safe_load(f)['velodyne_transform_node']['ros__parameters']
-    convert_params['calibration'] = str(convert_share_dir / 'params' / 'VLP16db.yaml')
-    VLP_pointcloud = Node(
-        package='velodyne_pointcloud',
-        executable='velodyne_transform_node',
-        output='both',
-        parameters=[convert_params]
-    )
 
     nav2_launch_path = PathJoinSubstitution(
         [FindPackageShare('nav2_bringup'), 'launch', 'navigation_launch.py']
@@ -60,9 +38,9 @@ def generate_launch_description():
         [FindPackageShare(package_name), 'rviz', 'rover_navigation.rviz']
     )
 
-    # default_map_path = PathJoinSubstitution(
-    #     [FindPackageShare(package_name), 'maps', f'{MAP_NAME}.yaml']
-    # )
+    default_map_path = PathJoinSubstitution(
+        [FindPackageShare(package_name), 'maps', f'{MAP_NAME}.yaml']
+    )
 
     nav2_config_path = PathJoinSubstitution(
         [FindPackageShare(package_name), 'config', 'navigation.yaml']
@@ -77,38 +55,6 @@ def generate_launch_description():
         PythonLaunchDescriptionSource([os.path.join(
             get_package_share_directory('slam_toolbox'), 'launch', 'online_async_launch.py')]),
             launch_arguments={'use_sim_time': LaunchConfiguration("sim"), 'params_file': slam_config_file}.items()
-    )
-
-    translate = Node(
-            package='pointcloud_to_laserscan',
-            executable='pointcloud_to_laserscan_node',
-            name='pointcloud_to_laserscan',
-            remappings=[
-                ('/cloud_in', '/velodyne_points'),  # Input pointcloud
-                ('/scan', '/scan') # Output laserscan
-            ],
-            parameters=[{
-                # CRITICAL FIX: Override QoS to match RViz2 requirements
-                'qos_overrides./scan.publisher.reliability': 'reliable',  # Force RELIABLE
-                'qos_overrides./scan.publisher.durability': 'volatile',
-                'qos_overrides./scan.publisher.history': 'keep_last',
-                'qos_overrides./scan.publisher.depth': 10,
-                'use_sim_time': False,  # Explicitly set
-                'allow_undeclared_parameters': False,
-                #'target_frame': 'laserscan',
-                'transform_tolerance': 0.01,
-                'min_height': -0.5,  # Lowered to detect ground obstacles
-                'max_height': 2.0,
-                'angle_min': -1.5708,  # -M_PI/2
-                'angle_max': 1.5708,  # M_PI/2
-                'angle_increment': 0.01745,  # ~1 degree resolution
-                'scan_time': 0.01,
-                'range_min': 0.9,
-                'range_max': 30.0,
-                'use_inf': True,
-                'inf_epsilon': 1.0
-            }]
-            
     )
 
     return LaunchDescription([
@@ -129,39 +75,36 @@ def generate_launch_description():
     #         default_value=default_map_path,
     #         description='Navigation map path'
     #     ),
-        VLP_driver,
-        VLP_pointcloud,
-        translate,
-
+    
         slam,
 
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(nav2_launch_path),
-            condition=UnlessCondition(LaunchConfiguration("sim")),
-            launch_arguments={
-                #'map': LaunchConfiguration("map"),
-                'use_sim_time': LaunchConfiguration("sim"),
-                'params_file': nav2_config_path
-            }.items()
-        ),
+        # IncludeLaunchDescription(
+        #     PythonLaunchDescriptionSource(nav2_launch_path),
+        #     condition=UnlessCondition(LaunchConfiguration("sim")),
+        #     launch_arguments={
+        #         #'map': LaunchConfiguration("map"),
+        #         'use_sim_time': LaunchConfiguration("sim"),
+        #         'params_file': nav2_config_path
+        #     }.items()
+        # ),
 
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(nav2_launch_path),
-            condition=IfCondition(LaunchConfiguration("sim")),
-            launch_arguments={
-                #'map': LaunchConfiguration("map"),
-                'use_sim_time': LaunchConfiguration("sim"),
-                'params_file': nav2_sim_config_path
-            }.items()
-        ),
+        # IncludeLaunchDescription(
+        #     PythonLaunchDescriptionSource(nav2_launch_path),
+        #     condition=IfCondition(LaunchConfiguration("sim")),
+        #     launch_arguments={
+        #         #'map': LaunchConfiguration("map"),
+        #         'use_sim_time': LaunchConfiguration("sim"),
+        #         'params_file': nav2_sim_config_path
+        #     }.items()
+        # )
 
-        Node(
-            package='rviz2',
-            executable='rviz2',
-            name='rviz2',
-            output='screen',
-            arguments=['-d', rviz_config_path],
-            condition=IfCondition(LaunchConfiguration("rviz")),
-            parameters=[{'use_sim_time': LaunchConfiguration("sim")}]
-        )
+        # Node(
+        #     package='rviz2',
+        #     executable='rviz2',
+        #     name='rviz2',
+        #     output='screen',
+        #     arguments=['-d', rviz_config_path],
+        #     condition=IfCondition(LaunchConfiguration("rviz")),
+        #     parameters=[{'use_sim_time': LaunchConfiguration("sim")}]
+        #)
     ])

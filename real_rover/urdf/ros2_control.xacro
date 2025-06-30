@@ -5,13 +5,13 @@
       <plugin>ros2_control_wheeled_robot_hardware/WheeledRobotHardware</plugin>
       
       <!-- Параметры UDP-соединения -->
-      <param name="udp_ip">127.0.0.1</param>  <!-- IP робота  192.168.3.106, для отладки 127.0.0.1 -->
-      <param name="udp_port">8889</param>         <!-- Порт робота 4001, для отладки 8889 -->
-      <param name="local_port">8888</param>       <!-- Локальный порт 4001,  для отладки 8888 -->
+      <param name="udp_ip">192.168.3.106</param>  <!-- IP робота  192.168.3.106, для отладки 127.0.0.1 -->
+      <param name="udp_port">4001</param>         <!-- Порт робота 4001, для отладки 8889 -->
+      <param name="local_port">4001</param>       <!-- Локальный порт 4001,  для отладки 8888 -->
     
       <!-- Параметры колес -->
-      <param name="wheel_separation">0.8</param>  <!-- Расстояние между колесами (м) -->
-      <param name="wheel_radius">0.19</param>    <!-- Радиус колес (м) -->
+      <param name="wheel_separation">0.9</param>  <!-- Расстояние между колесами (м) -->
+      <param name="wheel_radius">0.23</param>    <!-- Радиус колес (м) -->
 
       <param name="send_timeout_ms">500</param>
       <param name="receive_timeout_ms">500</param>

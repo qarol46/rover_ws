@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 from launch import LaunchDescription
 from launch import LaunchContext
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
@@ -22,72 +21,81 @@ from launch.conditions import IfCondition
 from launch.substitutions import EnvironmentVariable
 from launch_ros.substitutions import FindPackageShare
 from launch_ros.actions import Node
+from launch.conditions import IfCondition, UnlessCondition
+import os
+from ament_index_python.packages import get_package_share_directory, get_package_share_path
+
 
 package_name = 'rover_navigation'
 
 def generate_launch_description():
-    slam_launch_path = PathJoinSubstitution(
-        [FindPackageShare('slam_toolbox'), 'launch', 'online_async_launch.py']
-    )
 
-    slam_config_path = PathJoinSubstitution(
-        [FindPackageShare(package_name), 'config', 'slam.yaml']
-    )
+    use_sim_time = LaunchConfiguration('use_sim_time')
+    slam_params_file = LaunchConfiguration('slam_params_file')
 
-    navigation_launch_path = PathJoinSubstitution(
-        [FindPackageShare('nav2_bringup'), 'launch', 'navigation_launch.py']
-    )
+    declare_use_sim_time_argument = DeclareLaunchArgument(
+        name='use_sim_time',
+        default_value='false',
+        description='Use simulation/Gazebo clock')
+    declare_slam_params_file_cmd = DeclareLaunchArgument(
+        'slam_params_file',
+        default_value=os.path.join(get_package_share_directory(package_name), 'config', 'slam.yaml'),
+        description='Full path to the ROS2 parameters file to use for the slam_toolbox node')
 
-    nav2_config_path = PathJoinSubstitution(
-        [FindPackageShare(package_name), 'config', 'navigation_sim.yaml']    
-    )
+    start_async_slam_toolbox_node = Node(
+        parameters=[
+          slam_params_file,
+          {'use_sim_time': use_sim_time}
+        ],
+        package='slam_toolbox',
+        executable='async_slam_toolbox_node',
+        name='slam_toolbox',
+        output='screen')
 
-    rviz_config_path = PathJoinSubstitution(
-        [FindPackageShare(package_name), 'rviz', 'rover_navigation.rviz']
+    translate = Node(
+            package='pointcloud_to_laserscan',
+            executable='pointcloud_to_laserscan_node',
+            name='pointcloud_to_laserscan',
+            remappings=[
+                ('/cloud_in', '/velodyne_points'),  # Input pointcloud
+                ('/scan', '/scan') # Output laserscan
+            ],
+            parameters=[{
+                # CRITICAL FIX: Override QoS to match RViz2 requirements
+                'qos_overrides./scan.publisher.reliability': 'reliable',  # Force RELIABLE
+                'qos_overrides./scan.publisher.durability': 'volatile',
+                'qos_overrides./scan.publisher.history': 'keep_last',
+                'qos_overrides./scan.publisher.depth': 10,
+                'use_sim_time': LaunchConfiguration("sim"),  # Explicitly set
+                'allow_undeclared_parameters': False,
+                #'target_frame': 'velodyne',
+                #'transform_tolerance': 0.01,
+                'min_height': -0.5,  # Lowered to detect ground obstacles
+                'max_height': 2.0,
+                'angle_min': -1.5708,  # -M_PI/2
+                'angle_max': 1.5708,  # M_PI/2
+                'angle_increment': 0.01745,  # ~1 degree resolution
+                'scan_time': 0.1,
+                'range_min': 0.1,
+                'range_max': 25.0,
+                'use_inf': True,
+                'inf_epsilon': 1.0
+            }]
+            
     )
-    
-    lc = LaunchContext()
-    ros_distro = EnvironmentVariable('ROS_DISTRO')
-    slam_param_name = 'slam_params_file'
-    if ros_distro.perform(lc) == 'foxy': 
-        slam_param_name = 'params_file'
 
     return LaunchDescription([
         DeclareLaunchArgument(
-            name='sim', 
-            default_value='true',
-            description='Enable use_sime_time to true'
-        ),
-
-        DeclareLaunchArgument(
             name='rviz', 
-            default_value='true',
+            default_value='false',
             description='Run rviz'
         ),
 
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(navigation_launch_path),
-            launch_arguments={
-                'use_sim_time': LaunchConfiguration("sim"),
-                'params_file': nav2_config_path
-            }.items()
-        ),
+        #VLP_driver,
+        #VLP_pointcloud,
+        #translate,
 
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(slam_launch_path),
-            launch_arguments={
-                'use_sim_time': LaunchConfiguration("sim"),
-                slam_param_name: slam_config_path
-            }.items()
-        ),
-
-        Node(
-            package='rviz2',
-            executable='rviz2',
-            name='rviz2',
-            output='screen',
-            arguments=['-d', rviz_config_path],
-            condition=IfCondition(LaunchConfiguration("rviz")),
-            parameters=[{'use_sim_time': LaunchConfiguration("sim")}]
-        )
+        declare_use_sim_time_argument,
+        declare_slam_params_file_cmd,
+        start_async_slam_toolbox_node
     ])

@@ -3,7 +3,6 @@
 
   <!-- Включение файлов -->
   <xacro:include filename="chassis.xacro"/>
-  
   <xacro:include filename="imu.xacro"/>
   <xacro:include filename="ros2_control.xacro"/>
   <xacro:include filename="$(find velodyne_description)/urdf/VLP-16.urdf.xacro"/>
@@ -11,27 +10,25 @@
                 name="velodyne" 
                 topic="/velodyne_points" 
                 organize_cloud="false" 
-                hz="5" 
-                lasers="8" 
-                samples="200" 
+                hz="15" 
+                lasers="16"
+                samples="400" 
                 collision_range="0.3" 
-                min_range="0.9" 
-                max_range="5.0" 
+                min_range="0.1" 
+                max_range="25.0" 
                 noise="0.0"   
                 min_angle="-${pi/2}" 
                 max_angle="${pi/2}" 
                 gpu="false">
                 <origin xyz="0 0 ${visionbox_link_height/2}" rpy="0 0 0" />
   </xacro:VLP-16>
-
-  <!--
   <xacro:include filename="$(find realsense2_description)/urdf/_d415.urdf.xacro"/>
-  
+  <xacro:sensor_d415 parent="front_camera_link" use_nominal_extrinsics="true">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </xacro:sensor_d415>
   <xacro:include filename="depth_camera.xacro"/>
-  <xacro:include filename="gazebo_control.xacro"/>
+  <!--<xacro:include filename="gazebo_control.xacro"/>
   <xacro:include filename="ros2_control.xacro"/>
-  -->
-  
-  <!--xacro:include filename="camera.xacro"/-->
+  <xacro:include filename="camera.xacro"/>-->
   
 </robot>

@@ -1,6 +1,7 @@
 controller_manager:
   ros__parameters:
-    update_rate: 50              # частота обновления контроллеров
+    update_rate: 100            # частота обновления контроллеров'
+    use_sim_time: true
 
     # регистрируем контроллеры
     diff_cont:
@@ -10,28 +11,32 @@ controller_manager:
 
 # ----------------- DiffDriveController -----------------
 diff_cont:
-  ros__parameters: 
-    odom_frame_id: "odom"
-    base_frame_id: "root_link"
-    enable_odom_tf: true
-    left_wheel_names: 
-      - "base_to_left_forward_wheel"
-      - "base_to_left_middle_wheel"
-      - "base_to_left_rear_wheel"
-    right_wheel_names: 
-      - "base_to_right_forward_wheel"
-      - "base_to_right_middle_wheel"
-      - "base_to_right_rear_wheel"
-    command_interfaces:
-      - velocity
-    state_interfaces:
-      - velocity
-      - position
-    wheel_separation: 0.8
-    wheel_radius: 0.19
+  ros__parameters:
+    odom_frame_id: odom
+    enable_odom_tf: false
+    publish_odom_tf: false
+    #pose_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]
+    #twist_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]
+    #open_loop: false
+    # ros__remappings:
+    #   - ["odom", "/odom"]
+    base_frame_id: root_link
+    wheels_per_side: 3
+    left_wheel_names: [
+      "base_to_left_forward_wheel",
+      "base_to_left_middle_wheel",
+      "base_to_left_rear_wheel"]
+    right_wheel_names: [
+      "base_to_right_forward_wheel",
+      "base_to_right_middle_wheel",
+      "base_to_right_rear_wheel"]
+    command_interfaces: [velocity]
+    state_interfaces: [velocity, position]
+    wheel_separation: 0.9
+    wheel_radius: 0.23
     cmd_vel_timeout: 0.5
     use_stamped_vel: false
-    publish_rate: 50.0 # Defaults to 50
+    publish_rate: 100.0 # Defaults to 50
 
 
 #controller_manager:

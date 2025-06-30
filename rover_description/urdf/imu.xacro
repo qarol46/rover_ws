@@ -33,27 +33,51 @@
     <parent link="ctrlbox_link"/>
     <child link="xsens_link"/>
     <origin xyz="0 0.08 ${0.01-ctrlbox_link_height/2}" rpy="0 0 0"/>
-    <!--origin xyz="0 0 0" rpy="0 0 ${pi/2}"/-->
   </joint>
 
-  <!-- Xsense gazebo model -->
+  <!-- Xsense gazebo model with realistic noise and drift -->
   <gazebo reference="xsens_link">
     <gravity>true</gravity>
     <sensor name="imu_sensor" type="imu">
       <pose relative_to='xsens_link'>0 0 0 0 0 0</pose>
       <always_on>true</always_on>
       <update_rate>100</update_rate>
-      <!--reduced version of the plugin for ros2 without params-->
+      
+      <!-- Noise parameters -->
+      <imu>
+        <noise>
+          <!-- Accelerometer noise parameters (m/s²) -->
+          <accel>
+            <mean>0.0</mean>
+            <stddev>0.017  <!-- ~0.0017g noise -->
+              </stddev>
+            <bias_mean>0.1 0.1 0.1</bias_mean>  <!-- Accelerometer bias -->
+            <bias_stddev>0.001 0.001 0.001</bias_stddev>
+            <dynamic_bias_stddev>0.002 0.002 0.002</dynamic_bias_stddev>  <!-- Bias drift -->
+            <dynamic_bias_correlation_time>600.0</dynamic_bias_correlation_time>  <!-- 10 minutes -->
+          </accel>
+          
+          <!-- Gyroscope noise parameters (rad/s) -->
+          <gyro>
+            <mean>0.0</mean>
+            <stddev>0.0002  <!-- ~0.01°/s noise -->
+              </stddev>
+            <bias_mean>0.0001 0.0001 0.0001</bias_mean>  <!-- Gyro bias -->
+            <bias_stddev>0.00001 0.00001 0.00001</bias_stddev>
+            <dynamic_bias_stddev>0.00002 0.00002 0.00002</dynamic_bias_stddev>  <!-- Bias drift -->
+            <dynamic_bias_correlation_time>3600.0</dynamic_bias_correlation_time>  <!-- 1 hour -->
+          </gyro>
+        </noise>
+      </imu>
+
       <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
         <ros>
-          <!-- publish to /imu/data -->
-          <!--namespace>/imu</namespace-->
           <remapping>~/out:=imu</remapping>
         </ros>
-        <!--topicName>/imu/data_raw</topicName>
+        <!--topicName>imu/data_raw</topicName>
         <bodyName>xsens_link</bodyName>
         <updateRateHZ>100.0</updateRateHZ>
-        <gaussianNoise>2.27e-8</gaussianNoise>
+        <gaussianNoise>0.001</gaussianNoise>
         <xyzOffset>0 0 0</xyzOffset>
         <rpyOffset>0 0 0</rpyOffset>
         <frameName>xsens_link</frameName-->
