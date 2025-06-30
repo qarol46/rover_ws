@@ -22,7 +22,7 @@ public:
     declare_parameter("direction_threshold", 0.5);
     declare_parameter("min_angular_speed", 0.005); // минимальная угловая скорость для обновления
     declare_parameter("angle_change_threshold", 0.0005); // порог изменения угла для фильтрации
-
+    declare_parameter("max_angle_difference", 0.05);
     // Инициализация
     last_position_.x = 0.0;
     last_position_.y = 0.0;
@@ -95,7 +95,7 @@ private:
     double abs_angular_speed = fabs(angular_speed);
     if (abs_angular_speed > get_parameter("min_angular_speed").as_double()) {
       double yaw_diff = last_valid_imu_yaw_ - imu_yaw_offset_;
-      current_yaw_ += yaw_diff; // Используем угол от IMU
+      if(fabs(yaw_diff) < get_parameter("max_angle_difference").as_double()) current_yaw_ += yaw_diff; // Используем угол от IMU
       imu_yaw_offset_ = last_valid_imu_yaw_;
     }
     
