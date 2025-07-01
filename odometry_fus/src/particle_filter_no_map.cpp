@@ -18,40 +18,43 @@ struct Particle {
 class ParticleFilterNoMap : public rclcpp::Node {
 public:
     ParticleFilterNoMap() : Node("particle_filter_no_map"), tf_broadcaster_(this) {
-        // Параметры
-        declare_parameter("num_particles", 100);
-        declare_parameter("odom_topic", "/odom");
-        declare_parameter("laser_topic", "/scan");
-        declare_parameter("particles_topic", "/particles");
-        declare_parameter("estimated_pose_topic", "/estimated_pose");
-        declare_parameter("world_frame", "odom");
-        declare_parameter("robot_frame", "base_link");
+    // Параметры
+    declare_parameter("num_particles", 100);
+    declare_parameter("odom_topic", "/odom");
+    declare_parameter("laser_topic", "/scan");
+    declare_parameter("particles_topic", "/particles");
+    declare_parameter("estimated_pose_topic", "/estimated_pose");
+    declare_parameter("world_frame", "odom");
+    declare_parameter("robot_frame", "base_link");
+    
+    num_particles_ = get_parameter("num_particles").as_int();
+    
+    // Инициализация генератора случайных чисел
+    std::random_device rd;
+    gen_ = std::mt19937(rd());
+    
+    // Инициализация частиц
+    initialize_particles();
+    
+    // Подписки с правильными QoS
+    odom_sub_ = create_subscription<nav_msgs::msg::Odometry>(
+        get_parameter("odom_topic").as_string(), 
+        rclcpp::QoS(10),  // Стандартные настройки для одометрии
+        std::bind(&ParticleFilterNoMap::odom_callback, this, std::placeholders::_1));
         
-        num_particles_ = get_parameter("num_particles").as_int();
+    laser_sub_ = create_subscription<sensor_msgs::msg::LaserScan>(
+        get_parameter("laser_topic").as_string(), 
+        rclcpp::SensorDataQoS(),  // Специальные настройки для сенсорных данных
+        std::bind(&ParticleFilterNoMap::laser_callback, this, std::placeholders::_1));
+    
+    // Публикаторы
+    particles_pub_ = create_publisher<geometry_msgs::msg::PoseArray>(
+        get_parameter("particles_topic").as_string(), 10);
         
-        // Инициализация генератора случайных чисел
-        std::random_device rd;
-        gen_ = std::mt19937(rd());
-        
-        // Инициализация частиц вокруг начала координат
-        initialize_particles();
-        
-        // Подписки
-        odom_sub_ = create_subscription<nav_msgs::msg::Odometry>(
-            get_parameter("odom_topic").as_string(), 10,
-            std::bind(&ParticleFilterNoMap::odom_callback, this, std::placeholders::_1));
-            
-        laser_sub_ = create_subscription<sensor_msgs::msg::LaserScan>(
-            get_parameter("laser_topic").as_string(), 10,
-            std::bind(&ParticleFilterNoMap::laser_callback, this, std::placeholders::_1));
-        
-        // Публикаторы
-        particles_pub_ = create_publisher<geometry_msgs::msg::PoseArray>(
-            get_parameter("particles_topic").as_string(), 10);
-            
-        estimated_pose_pub_ = create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
-            get_parameter("estimated_pose_topic").as_string(), 10);
-    }
+    estimated_pose_pub_ = create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
+        get_parameter("estimated_pose_topic").as_string(), 
+        rclcpp::QoS(10).reliable());  // Гарантированная доставка
+    }   
 
 private:
     double getYawFromQuaternion(const tf2::Quaternion& q) {
@@ -298,14 +301,14 @@ private:
         estimated_pose_pub_->publish(pose_msg);
         
         // Публикуем TF
-        geometry_msgs::msg::TransformStamped transform;
-        transform.header = pose_msg.header;
-        transform.child_frame_id = get_parameter("robot_frame").as_string();
-        transform.transform.translation.x = pose_msg.pose.pose.position.x;
-        transform.transform.translation.y = pose_msg.pose.pose.position.y;
-        transform.transform.translation.z = 0.0;
-        transform.transform.rotation = pose_msg.pose.pose.orientation;
-        tf_broadcaster_.sendTransform(transform);
+        //geometry_msgs::msg::TransformStamped transform;
+        //transform.header = pose_msg.header;
+        //transform.child_frame_id = get_parameter("robot_frame").as_string();
+        //transform.transform.translation.x = pose_msg.pose.pose.position.x;
+        //transform.transform.translation.y = pose_msg.pose.pose.position.y;
+        //transform.transform.translation.z = 0.0;
+        //transform.transform.rotation = pose_msg.pose.pose.orientation;
+        //tf_broadcaster_.sendTransform(transform);
     }
 
     // Параметры
