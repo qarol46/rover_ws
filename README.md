@@ -6,7 +6,7 @@
 
 ## Оглавление
 1. [Содержимое проекта](#содержимое-проекта)
-2. [Описание пакетов](#описание-пакетов)
+2. [Сценарии запуска](#сценарии-запуска)
 3. [Установка](#установка)
 
 ---
@@ -28,22 +28,90 @@
 
 ---
 
-## Описание пакетов
+## Сценарии запуска
 
-### `bluespace_ai_xsens_ros_mti`
-**Назначение**: Получение данных от IMU Xsens MTi в формате темы ros2.  
-**Пример запуска**:
-```bash
-ros2 launch bluespace_ai_xsens_ros_mti_driver xsens_mti_node.launch```
-```
+### `Запуск плагина ros2_control для отладки системы управленяи колёсным шасси`
+**Подготовка к запуску**:
+1. Убедитесь, что в файле ros2_control.xacro параметры udp_ip, udp_port, local_port содержат значения 127.0.0.1, 8889, 8888 соответственно.
+2. Закоментируйте в файле запуска launch_rover ноды, связынные с запуском IMU, лидара и слиянием данных(xsens_launch, odometry_fus_node, VLP_driver, VLP_pointcloud, translate).
 
-### `echo_server`
-**Назначение**: Эмуляция работы реального робота при отладке ПО системы управления.  
-**Пример запуска**:
+**Порядок запуска**:
+1. Выполните сборку пакетов, активируйте окружение и запустите эхо-сервер, воспроизводящий обратную связь с робота.
 ```bash
+colcon build --symlink-install
+
+source install/setup.bash
+
 ros2 run echo_server plat_part
 ```
-**Примечание**: Проверьте, что параметры в файле ros2_control.xacro udp_ip, udp_port содержат значения 127.0.0.1 и 8889 соответственно.
+2. Перейдя в другой терминал, выполните активацию окружения и запустите файл.
+```bash
+source install/setup.bash
+
+ros2 launch real_rover launch_rover.launch.py
+```
+3. Для управления колёсным шасси можно воспользоваться любым из способов передать управляющие команды в тему /diff_cont/cmd_vel. Например,
+```bash
+source install/setup.bash
+
+ros2 launch real_rover teleop.launch.py #при использовании джойстика
+
+ros2 run teleop_twist_keyboard teleop_twist_keyboard #при использовании клавиатуры
+```
+
+**Возможные поломки и их исправления**:
+1. Сообщение "No wheel data recieved" от [Wheeled_robot_hardware] - проверьте корректность указанных значений в параметрах udp-протокола, перезапустите файл запуска launch_rover.launch.py.
+2. Отсутствие движение робота - проверьте наличие связи между echo_server и wheeled_robot_hardware, налиичие команд, публикующихся в тему /diff_cont/cmd_vel. 
+
+
+### `Запуск симуляции в среде Gazebo`
+
+**Порядок запуска**:
+1. Выполните сборку пакетов, активируйте окружение и запустите файл симуляции.
+```bash
+colcon build --symlink-install
+
+source install/setup.bash
+
+ros2 launch rover_description launch_sim.launch.py
+```
+2. Перейдя в другой терминал, выполните активацию окружения и запустите файл запуска slam.
+```bash
+source install/setup.bash
+
+ros2 launch rover_navigation slam.launch.py use_sim_time:=true
+```
+3. Для управления колёсным шасси выполните:
+```bash
+source install/setup.bash
+
+ros2 run teleop_twist_keyboard teleop_twist_keyboard
+```
+### `Запуск на реальном роботе
+
+**Порядок запуска**:
+1. Выполните сборку пакетов, активируйте окружение и запустите файл.
+```bash
+colcon build --symlink-install
+
+source install/setup.bash
+
+ros2 launch real_rover launch_rover.launch.py
+```
+2. Перейдя в другой терминал, выполните активацию окружения и запустите следующий файл для построения карты.
+```bash
+source install/setup.bash
+
+ros2 launch rover_navigation slam.launch.py
+```
+3. Для управления колёсным шасси выполните:
+```bash
+source install/setup.bash
+
+ros2 launch real_rover teleop.launch.py
+
+**Возможные поломки и их исправления**:
+1. Отсутсвие отклика на поворот - проверьте, публикует ли тема /imu данные. Если нет, проверьте наличие плагина для реализации IMU в Gazebo.
 
 ## Установка
 
