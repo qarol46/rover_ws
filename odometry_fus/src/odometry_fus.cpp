@@ -14,7 +14,7 @@ public:
   OdomFusion() : Node("odometry_fus"), current_direction_(1.0) {
     // Параметры
     declare_parameter("odom_topic", "/diff_cont/odom");
-    declare_parameter("imu_topic", "/imu");
+    declare_parameter("imu_topic", "/imu/data");
     declare_parameter("output_topic", "/odom");
     declare_parameter("child_frame", "root_link");
     declare_parameter("world_frame", "odom");
