@@ -59,7 +59,7 @@ def generate_launch_description():
     )
     
     # Запуск Gazebo
-    gazebo_world_file = os.path.join(get_package_share_directory(package_name),'worlds','gas_station.world')
+    gazebo_world_file = os.path.join(get_package_share_directory(package_name),'worlds','cafe.world')
     gazebo_params_file = os.path.join(get_package_share_directory(package_name),'config','gazebo_params.yaml')
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([os.path.join(
@@ -145,13 +145,8 @@ def generate_launch_description():
                 ('/scan', '/scan') # Output laserscan
             ],
             parameters=[{
-                # CRITICAL FIX: Override QoS to match RViz2 requirements
-                'qos_overrides./scan.publisher.reliability': 'reliable',  # Force RELIABLE
-                'qos_overrides./scan.publisher.durability': 'volatile',
-                'qos_overrides./scan.publisher.history': 'keep_last',
-                'qos_overrides./scan.publisher.depth': 10,
                 'use_sim_time': LaunchConfiguration("use_sim_time"),  
-                'allow_undeclared_parameters': False,
+                #'allow_undeclared_parameters': False,
                 #'target_frame': 'velodyne',
                 #'transform_tolerance': 0.01,
                 'min_height': -0.5,  # Lowered to detect ground obstacles
@@ -162,7 +157,7 @@ def generate_launch_description():
                 'scan_time': 0.0333,
                 'range_min': 0.1,
                 'range_max': 25.0,
-                'use_inf': True,
+                'use_inf': False,
                 'inf_epsilon': 1.0
             }]
             

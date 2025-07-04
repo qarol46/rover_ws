@@ -14,11 +14,11 @@ public:
   OdomFusion() : Node("odometry_fus"), current_direction_(1.0) {
     // Параметры
     declare_parameter("odom_topic", "/diff_cont/odom");
-    declare_parameter("imu_topic", "/imu");
+    declare_parameter("imu_topic", "imu/data/filtered");
     declare_parameter("output_topic", "/odom");
     declare_parameter("child_frame", "root_link");
-    declare_parameter("world_frame", "odom");
-    declare_parameter("publish_tf", true);
+    declare_parameter("world_frame", "vo");
+    declare_parameter("publish_tf", false);
     declare_parameter("min_speed", 0.001);
     declare_parameter("direction_threshold", 0.5);
     declare_parameter("min_angular_speed", 0.005); // минимальная угловая скорость для обновления

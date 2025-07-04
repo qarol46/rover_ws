@@ -1,0 +1,30 @@
+ekf_filter_node:
+  ros__parameters:
+    frequency: 50.0
+    two_d_mode: true
+    publish_tf: true
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_link
+    world_frame: odom
+
+    # Wheel odometry (from odometry_fus)
+    odom0: /odom
+    odom0_config: [true, true, false,   # x, y, z
+                   false, false, true,  # roll, pitch, yaw
+                   true, true, false,   # vx, vy, vz
+                   false, false, true]  # vroll, vpitch, vyaw
+
+    # Visual odometry (from RGBD)
+    odom1: /vo
+    odom1_config: [true, true, false,
+                   false, false, true,
+                   false, false, false,
+                   false, false, false]
+
+    # IMU data
+    imu0: /imu/data
+    imu0_config: [false, false, false,
+                  true, true, true,     # orientation
+                  false, false, false,
+                  true, true, true]     # angular velocitys

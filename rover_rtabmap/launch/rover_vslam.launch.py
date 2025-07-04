@@ -23,103 +23,79 @@ from ament_index_python.packages import get_package_share_directory
 def launch_setup(context, *args, **kwargs):
     
     localization = LaunchConfiguration('localization')
-
-    navigation_package = 'rover_navigation'
-    
-    navigation_launch_path = PathJoinSubstitution(
-        [FindPackageShare('nav2_bringup'), 'launch', 'navigation_launch.py']
-    )
-    
-    nav2_params_file_sim = PathJoinSubstitution(
-        [FindPackageShare(navigation_package), 'config', 'navigation_sim.yaml']
-    )
-
-    nav2_params_file = PathJoinSubstitution(
-        [FindPackageShare(navigation_package), 'config', 'navigation.yaml']
-    )
     
     use_sim_time = LaunchConfiguration("use_sim_time")
+
+    use_ekf = LaunchConfiguration("ekf")
+
+    package_name='rover_rtabmap'
     
     # With the simulator, the imu is not published fast enough 
     # and have a huge delay, disabling imu usage from VO
     use_imu = use_sim_time.perform(context) in ["false", "False"]
 
-    # vslam_params = os.path.join(
-    #     get_package_share_directory('rover_rtabmap'),
-    #     'config',
-    #     'rtabmap.yaml'
-    # )
+    rtabmap_params = os.path.join(get_package_share_directory('rover_rtabmap'),
+        'config',
+        'rtabmap.yaml'
+    )
 
-    vslam_params ={
-        'frame_id':'root_link',
-        'guess_frame_id':'odom',
-        'approx_sync': True,
-        'use_sim_time':use_sim_time,
-        'subscribe_rgbd':True,
-        'subscribe_odom_info':True,
-        'use_action_for_goal':True,
-        'wait_imu_to_init': False, #use_imu,
-        'wait_for_transform': 0.1,
-        # RTAB-Map's parameters should be strings
-        'Grid/DepthDecimation': '1',
-        'Grid/RangeMax': '2',
-        'GridGlobal/MinSize': '20',
-        'Grid/MinClusterSize': '20',
-        'Grid/MaxObstacleHeight': '2',
-        'Odom/ResetCountdown': '2', # sim is very flaky
-        'Kp/RoiRatios': '0.0 0.0 0.0 0.4' # ignore ground for loop closure detection (sim uses a very repetitive texture)
-    }
-    vslam_remappings=[('imu', 'imu'),
-                      ('odom', 'vo')]
-    
+    vslam_remappings=[
+            ('scan', '/scan'),  
+            ('imu', '/imu/data/filtered')
+    ]
+    ekf_config = os.path.join(get_package_share_directory(package_name), 'config', 'ekf_rtabmap_config.yaml')
+
     return [
-    #     IncludeLaunchDescription(
-    #         PythonLaunchDescriptionSource(navigation_launch_path),
-    #         launch_arguments={
-    #             'use_sim_time': use_sim_time,
-    #             'params_file': nav2_params_file_sim
-    #         }.items()
-    #     ),
         
         # compute imu orientation
-        # Node(
-        #     package='imu_filter_madgwick', executable='imu_filter_madgwick_node', output='screen',
-        #     parameters=[{
-        #       'use_mag':False,
-        #       'world_frame':'map',
-        #       'publish_tf':False}],
-        #     remappings=[
-        #         ('imu/data_raw', 'imu/data'),
-        #         ('imu/data', 'imu')]
-        #     ),
+        Node(
+            package='imu_filter_madgwick',
+            executable='imu_filter_madgwick_node',
+            output='screen',
+            parameters=[{
+                'use_mag': False,
+                'world_frame': 'enu',
+                'publish_tf': False
+            }],
+            remappings=[
+                ('imu/data_raw', 'imu/data/raw'),    # Input (what the node subscribes to)
+                ('imu/data', 'imu/data/filtered')     # Output (what the node publishes)
+            ]
+        ),
         
         # VSLAM nodes:
         Node(
             package='rtabmap_sync', executable='rgbd_sync', output='screen',
-            parameters=[vslam_params],
+            parameters=[rtabmap_params],
             remappings=[('rgb/image', '/camera/image_raw'),
                         ('rgb/camera_info', '/camera/camera_info'),
                         ('depth/image', '/camera/depth/image_raw')]),
 
         Node(
             package='rtabmap_odom', executable='rgbd_odometry', output='screen',
-            parameters=[vslam_params, {'odom_frame_id': 'vo'}],
-            remappings=vslam_remappings,
-            arguments=["--ros-args", "--log-level", 'info']),
+                parameters=[rtabmap_params, {
+                    'odom_frame_id': 'vo',  # Publish to vo frame
+                    'publish_tf_odom': False  # Disable TF publishing
+                }],
+            remappings=[('odom', '/vo')],
+            arguments=["--ros-args", "--log-level", 'info'],
+            ),
 
-        # # SLAM Mode:
+        # SLAM Mode:
         Node(
             condition=UnlessCondition(localization),
             package='rtabmap_slam', executable='rtabmap', output='screen',
-            parameters=[vslam_params],
+            parameters=[rtabmap_params],
             remappings=vslam_remappings,
-            arguments=['-d']), # This will delete the previous database (~/.ros/rtabmap.db)
+            #arguments=['--delete_db_on_start'],
+            arguments=['-d']
+        ),
             
         # Localization mode:
         Node(
             condition=IfCondition(localization),
             package='rtabmap_slam', executable='rtabmap', output='screen',
-            parameters=[vslam_params, 
+            parameters=[rtabmap_params, 
               {'Mem/IncrementalMemory':'False',
                'Mem/InitWMWithAllNodes':'True'}],
             remappings=vslam_remappings
@@ -128,8 +104,8 @@ def launch_setup(context, *args, **kwargs):
         Node(
             package='rtabmap_viz', executable='rtabmap_viz', output='screen',
             condition=IfCondition(LaunchConfiguration("rtabmap_viz")),
-            parameters=[vslam_params],
-            remappings= vslam_remappings
+            parameters=[rtabmap_params],
+            remappings=vslam_remappings
         ),
         
         # Compute ground/obstacle clouds for nav2 voxel layers
@@ -140,14 +116,26 @@ def launch_setup(context, *args, **kwargs):
                          'voxel_size': 0.02}],
             remappings=[('depth/image', '/camera/depth/image_raw'),
                         ('depth/camera_info', '/camera/depth/camera_info'),
-                        ('cloud', '/camera/points')]),
+                        ('cloud', '/camera/cloud')]
+            ),
         
         Node(
             package='rtabmap_util', executable='obstacles_detection', output='screen',
-            parameters=[vslam_params],
-            remappings=[('cloud', '/camera/points'),
+            parameters=[rtabmap_params],
+            remappings=[('cloud', '/camera/cloud'),
                         ('obstacles', '/camera/obstacles'),
-                        ('ground', '/camera/ground')]),
+                        ('ground', '/camera/ground')]
+            ),
+
+        Node(
+            package='robot_localization',
+            executable='ekf_node',
+            name='ekf_filter_node',
+            output='screen',
+            parameters=[ekf_config, {'use_sim_time': LaunchConfiguration("use_sim_time")}],
+            remappings=[('odom', 'odom')],
+            condition = IfCondition(LaunchConfiguration("ekf")),
+        ),
     ]
 
 def generate_launch_description():
@@ -174,6 +162,13 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'localization', default_value='false', choices=['true', 'false'],
             description='Launch rtabmap in localization mode (a map should have been already created).'),
+
+        DeclareLaunchArgument(
+            name = 'ekf',
+            default_value = 'true',
+            description = 'Use robot localisation package to use multiple odometry sources'
+        ),
+        
         
         OpaqueFunction(function=launch_setup)
     ])

@@ -182,6 +182,11 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        xsens_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
       Mass Properties:
         Inertia: false
         Mass: false
@@ -341,40 +346,6 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
-    - Alpha: 1
-      Autocompute Intensity Bounds: true
-      Autocompute Value Bounds:
-        Max Value: 10
-        Min Value: -10
-        Value: true
-      Axis: Z
-      Channel Name: intensity
-      Class: rviz_default_plugins/PointCloud2
-      Color: 255; 255; 255
-      Color Transformer: ""
-      Decay Time: 0
-      Enabled: true
-      Invert Rainbow: false
-      Max Color: 255; 255; 255
-      Max Intensity: 4096
-      Min Color: 0; 0; 0
-      Min Intensity: 0
-      Name: PointCloud2
-      Position Transformer: ""
-      Selectable: true
-      Size (Pixels): 3
-      Size (m): 0.009999999776482582
-      Style: Flat Squares
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        Filter size: 10
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: ""
-      Use Fixed Frame: true
-      Use rainbow: true
-      Value: true
     - Class: rviz_default_plugins/TF
       Enabled: true
       Frame Timeout: 15
@@ -434,6 +405,8 @@ Visualization Manager:
           Value: true
         visionbox_link:
           Value: true
+        xsens_link:
+          Value: true
       Marker Scale: 1
       Name: TF
       Show Arrows: true
@@ -469,6 +442,8 @@ Visualization Manager:
                   velodyne_base_link:
                     velodyne:
                       {}
+                xsens_link:
+                  {}
               left_forward_wheel:
                 {}
               left_middle_wheel:
@@ -529,7 +504,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 5.649864196777344
+      Distance: 3.1745851039886475
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -544,10 +519,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6352037191390991
+      Pitch: 0.3952038288116455
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.126695394515991
+      Yaw: 3.1316916942596436
     Saved: ~
 Window Geometry:
   Displays:
