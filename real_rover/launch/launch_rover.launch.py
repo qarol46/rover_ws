@@ -167,7 +167,7 @@ def generate_launch_description():
                 'allow_undeclared_parameters': False,
                 #'target_frame': 'laserscan',
                 #'transform_tolerance': 0.01,
-                'min_height': -0.5,  # Lowered to detect ground obstacles
+                'min_height': -0.45,  # Lowered to detect ground obstacles
                 'max_height': 2.0,
                 'angle_min': -1.5708,  # -M_PI/2
                 'angle_max': 1.5708,  # M_PI/2

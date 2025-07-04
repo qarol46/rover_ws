@@ -16,7 +16,7 @@ class MotionEmulator(Node):
         self.declare_parameter('angular_speed', 0.5)  # рад/с
         self.declare_parameter('position_tolerance', 0.05)  # м
         self.declare_parameter('angle_tolerance', 0.05)  # рад
-        self.declare_parameter('turn_correction_factor', 1.8)  # Поправочный коэффициент для поворотов
+        self.declare_parameter('turn_correction_factor', 1.0)  # Поправочный коэффициент для поворотов
         
         # Текущее состояние
         self.current_x = 0.0
@@ -34,7 +34,7 @@ class MotionEmulator(Node):
         # Подписка на одометрию
         self.odom_sub = self.create_subscription(
             Odometry,
-            '/diff_cont/odom',
+            '/odom',
             self.odom_callback,
             10)
         

@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Xsense -->
+  <xacro:macro name="xsens_link_geometry">
+    <geometry>
+      <box size="0.001 0.001 0.001"/>
+    </geometry>
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </xacro:macro>
+
+  <link name="xsens_link">
+    <visual>
+      <xacro:xsens_link_geometry />
+      <material name="grey">
+        <color rgba="0.5 0.5 0.5 1"/>
+      </material>
+    </visual>
+    <collision>
+      <xacro:xsens_link_geometry />
+    </collision>
+    <xacro:box_inertia
+     b_mass="0.1"
+     b_length="0.1"
+     b_width="0.1"
+     b_height="0.1"/>
+  </link>
+
+  <joint name="xsens_joint" type="fixed">
+    <parent link="ctrlbox_link"/>
+    <child link="xsens_link"/>
+    <origin xyz="0 0.08 ${0.01-ctrlbox_link_height/2}" rpy="0 0 0"/>
+  </joint>  
+</robot>

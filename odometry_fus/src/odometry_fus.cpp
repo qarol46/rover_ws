@@ -23,7 +23,7 @@ public:
     declare_parameter("direction_threshold", 0.5);
     declare_parameter("min_angular_speed", 0.005); // минимальная угловая скорость для обновления
     declare_parameter("angle_change_threshold", 0.0005); // порог изменения угла для фильтрации
-    declare_parameter("max_angle_difference", 0.05);
+    declare_parameter("max_angle_difference", 0.09);
     declare_parameter("moving_average_window", 10); // размер окна для скользящего среднего
     
     // Инициализация
