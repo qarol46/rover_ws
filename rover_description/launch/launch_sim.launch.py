@@ -59,7 +59,7 @@ def generate_launch_description():
     )
     
     # Запуск Gazebo
-    gazebo_world_file = os.path.join(get_package_share_directory(package_name),'worlds','gas_station.world')
+    gazebo_world_file = os.path.join(get_package_share_directory(package_name),'worlds','cafe.world')
     gazebo_params_file = os.path.join(get_package_share_directory(package_name),'config','gazebo_params.yaml')
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([os.path.join(
@@ -102,11 +102,13 @@ def generate_launch_description():
         arguments=["diff_cont"]
     )
 
+    odometry_fus_config = os.path.join(get_package_share_directory(package_name), 'config', 'odometry_fus.yaml')
     odometry_fus_node = Node(
             package='odometry_fus',
             executable='odometry_fus_node',
             name='odometry_fus_node',        
-            output='screen',            
+            output='screen',
+            parameters=[odometry_fus_config],
     )
 
     # Initializing LIDAR - set here for debugging cause there is no nedd to drive robot
