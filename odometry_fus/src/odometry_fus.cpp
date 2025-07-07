@@ -20,10 +20,10 @@ public:
     declare_parameter("publish_tf", true);
     declare_parameter("min_speed", 0.001);
     declare_parameter("direction_threshold", 0.5);
-    declare_parameter("min_angular_speed", 0.0175); // минимальная угловая скорость для обновления ориентации
+    declare_parameter("min_angular_speed", 0.018); // минимальная угловая скорость для обновления ориентации
     declare_parameter("angle_change_threshold", 0.0005); // порог изменения угла для фильтрации
     declare_parameter("max_angle_difference", 0.05);
-    declare_parameter("moving_average_window", 3); // размер окна для скользящего среднего
+    declare_parameter("moving_average_window", 5); // размер окна для скользящего среднего
     
     last_position_.x = 0.0;
     last_position_.y = 0.0;
