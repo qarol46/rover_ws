@@ -12,7 +12,6 @@
 class OdomFusion : public rclcpp::Node {
 public:
   OdomFusion() : Node("odometry_fus"), current_direction_(1.0) {
-    // Параметры
     declare_parameter("odom_topic", "/diff_cont/odom");
     declare_parameter("imu_topic", "/imu/data");
     declare_parameter("output_topic", "/odom");
@@ -21,12 +20,11 @@ public:
     declare_parameter("publish_tf", true);
     declare_parameter("min_speed", 0.001);
     declare_parameter("direction_threshold", 0.5);
-    declare_parameter("min_angular_speed", 0.005); // минимальная угловая скорость для обновления
+    declare_parameter("min_angular_speed", 0.0175); // минимальная угловая скорость для обновления ориентации
     declare_parameter("angle_change_threshold", 0.0005); // порог изменения угла для фильтрации
-    declare_parameter("max_angle_difference", 0.09);
-    declare_parameter("moving_average_window", 10); // размер окна для скользящего среднего
+    declare_parameter("max_angle_difference", 0.05);
+    declare_parameter("moving_average_window", 3); // размер окна для скользящего среднего
     
-    // Инициализация
     last_position_.x = 0.0;
     last_position_.y = 0.0;
     last_position_.z = 0.0;
@@ -38,7 +36,6 @@ public:
     is_first_imu_ = true;
     moving_average_window_ = get_parameter("moving_average_window").as_int();
 
-    // Подписки
     odom_sub_ = create_subscription<nav_msgs::msg::Odometry>(
       get_parameter("odom_topic").as_string(), 10,
       std::bind(&OdomFusion::odom_callback, this, std::placeholders::_1));
@@ -47,7 +44,6 @@ public:
       get_parameter("imu_topic").as_string(), 10,
       std::bind(&OdomFusion::imu_callback, this, std::placeholders::_1));
 
-    // Публикаторы
     odom_pub_ = create_publisher<nav_msgs::msg::Odometry>(
       get_parameter("output_topic").as_string(), 10);
 
@@ -71,7 +67,6 @@ private:
       imu_yaw_offset_ = yaw;
       is_first_imu_ = false;
       
-      // Инициализация фильтра скользящего среднего
       yaw_history_.clear();
       for (int i = 0; i < moving_average_window_; ++i) {
         yaw_history_.push_back(yaw);
@@ -79,21 +74,17 @@ private:
       return;
     }
     
-    // Добавляем новое значение в историю
     yaw_history_.push_back(yaw);
-    // Удаляем самое старое значение, если окно переполнено
     if (yaw_history_.size() > moving_average_window_) {
       yaw_history_.pop_front();
     }
     
-    // Вычисляем скользящее среднее
     double sum = 0.0;
     for (double val : yaw_history_) {
       sum += val;
     }
     double filtered_yaw = sum / yaw_history_.size();
     
-    // Фильтрация мелких изменений
     double yaw_diff = filtered_yaw - last_imu_yaw_;
     if (fabs(yaw_diff) > get_parameter("angle_change_threshold").as_double()) {
       last_valid_imu_yaw_ = filtered_yaw;
@@ -151,7 +142,6 @@ private:
 
     odom_pub_->publish(new_odom);
 
-    // 7. Публикация TF
     if (get_parameter("publish_tf").as_bool()) {
       geometry_msgs::msg::TransformStamped transform;
       transform.header = new_odom.header;
@@ -179,7 +169,6 @@ private:
   rclcpp::Time angular_speed_zero_time_;
   bool is_first_imu_;
   
-  // Для фильтра скользящего среднего
   std::deque<double> yaw_history_;
   int moving_average_window_;
 };
