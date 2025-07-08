@@ -32,6 +32,7 @@ ament_target_dependencies(odometry_fus_node
   geometry_msgs
   tf2_ros
   tf2_geometry_msgs
+  std_msgs
 )
 
 # Узел фильтра частиц
@@ -51,9 +52,24 @@ ament_target_dependencies(particle_filter_no_map_node
   std_msgs
 )
 
+# Узел измерения дрейфа иму
+add_executable(xsens_drift_measure
+  src/xsens_drift_measurement.cpp
+)
+
+ament_target_dependencies(xsens_drift_measure
+  rclcpp
+  nav_msgs
+  sensor_msgs
+  geometry_msgs
+  tf2_ros
+  tf2_geometry_msgs
+)
+
 install(TARGETS 
   odometry_fus_node
   particle_filter_no_map_node
+  xsens_drift_measure
   DESTINATION lib/${PROJECT_NAME}
 )
 
