@@ -48,21 +48,33 @@ def generate_launch_description():
         executable='ground_filter_node',
         name='ground_filter',
         parameters=[{
-            'max_distance': 0.3,                            # Ignore distanse from floor
-            'angular_threshold': 7.0,                       # Угол отклонения от вертикали (градусы)
-            'min_ground_points': 500,                       
-            'use_imu': True,                                # Use imu
-            'target_frame':'root_link',                     # Robot targer frame
-            'subscribe_topic': '/velodyne_points',          # Input pcl
-            'publish_topic': '/velodyne_points_filtered',   # Output pcl
-            'number_of_points': 20,                         # Mininal number of points before vanish
-            'distance_threshold_calculation': 0.9,          # Min distance between points
-            #'line_min_length': 1.5,                         # Min lenght of points along a line
-            #'line_point_density': 150,                       
-            #'buffer_size': 3,                               # Размер буфера для временной фильтрации
-            #'min_point_age': 2,
-            'min_height': -0.3
-
+        # Максимальное расстояние от точки до плоскости, чтобы считаться частью земли (в метрах)
+        # Меньшие значения делают фильтрацию более строгой
+            'max_distance': 0.15,          # (по умолчанию: 0.15)
+        
+        # Минимальное количество точек, необходимых для определения плоскости земли
+        # Если найдено меньше точек - весь облако считается препятствием
+            'min_ground_points': 300,      # (по умолчанию: 500)
+        
+        # Использовать ли данные IMU для коррекции ориентации плоскости
+        # Включение требует рабочей TF-трансформации от IMU
+            'use_imu': False,              # (по умолчанию: False)
+        
+        # Целевая система координат для преобразования облака точек
+        # Используется только если use_imu=True
+            'target_frame': 'base_link',   # (по умолчанию: "base_link")
+        
+        # Количество соседних точек для анализа при удалении выбросов
+        # Большие значения делают фильтрацию более плавной, но медленной
+            'point_stack': 20,             # (по умолчанию: 50)
+        
+        # Стандартное отклонение для фильтрации выбросов
+        # Меньшие значения удаляют больше точек (более агрессивная фильтрация)
+            'dist_threshold': 0.9,         # (по умолчанию: 1.0)
+        
+        # Минимальная высота точки относительно робота, чтобы считаться препятствием (в метрах)
+        # Отрицательные значения учитывают неровности ниже уровня робота
+            'min_height': -0.3            # (по умолчанию: -0.3)
         }]
     )
     

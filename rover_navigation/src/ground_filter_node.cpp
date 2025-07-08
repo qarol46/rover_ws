@@ -1,172 +1,164 @@
+#include <memory>
 #include <rclcpp/rclcpp.hpp>
-#include <pcl/point_types.h>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/filters/extract_indices.h>
-#include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/filters/passthrough.h>
-#include <pcl_conversions/pcl_conversions.h>
+#include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/common/transforms.h>
-#include <sensor_msgs/msg/point_cloud2.hpp>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-#include <tf2_eigen/tf2_eigen.hpp>
-#include <Eigen/Dense>
-class GroundFilter : public rclcpp::Node {
+#include <tf2_eigen/tf2_eigen.h>
+#include <Eigen/Geometry>
+
+class GroundFilter : public rclcpp::Node
+{
 public:
-  GroundFilter() : Node("ground_filter"), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_) {
-    // Объявление параметров с значениями по умолчанию
-    max_distance_ = this->declare_parameter("max_distance", 0.15);
-    angular_threshold_ = this->declare_parameter("angular_threshold", 10.0);
-    min_ground_points_ = this->declare_parameter("min_ground_points", 500);
-    use_imu_ = this->declare_parameter("use_imu", true);
-    target_frame_ = this->declare_parameter("target_frame", "base_link");
-    subscribe_topic_ = this->declare_parameter("subscribe_topic", "/velodyne_points");
-    publish_topic_ = this->declare_parameter("publish_topic", "/velodyne_points_filtered");
-    point_stack_ = this->declare_parameter("number_of_points", 50);
-    dist_treshold_ = this->declare_parameter("distance_threshold", 1.0);
-    min_height_ = this->declare_parameter("min_height", -0.3); 
-    
-    // Подписка и публикация с параметризованными топиками
-    sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-      subscribe_topic_, 10,
-      std::bind(&GroundFilter::cloudCallback, this, std::placeholders::_1));
-      
-    pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(publish_topic_, 10);
-    
-    RCLCPP_INFO(this->get_logger(), "Ground filter initialized with parameters:");
-    RCLCPP_INFO(this->get_logger(), "  Subscribe topic: %s", subscribe_topic_.c_str());
-    RCLCPP_INFO(this->get_logger(), "  Publish topic: %s", publish_topic_.c_str());
-    RCLCPP_INFO(this->get_logger(), "  Max distance: %.2f m", max_distance_);
-    RCLCPP_INFO(this->get_logger(), "  Angular threshold: %.1f°", angular_threshold_);
-    RCLCPP_INFO(this->get_logger(), "  Min ground points: %d", min_ground_points_);
-    RCLCPP_INFO(this->get_logger(), "  Use IMU: %s", use_imu_ ? "true" : "false");
-    RCLCPP_INFO(this->get_logger(), "  Target frame: %s", target_frame_.c_str());
-    RCLCPP_INFO(this->get_logger(), "  Number of near points: %d", point_stack_);
-    RCLCPP_INFO(this->get_logger(), "  Distanse treshhold: %.1f", dist_treshold_);
-    RCLCPP_INFO(this->get_logger(), "  Min height: %.2f m", min_height_);
-  }
+    GroundFilter() : Node("ground_filter"), tf_buffer_(get_clock()), tf_listener_(tf_buffer_)
+    {
+        // Parameters
+        declare_parameter("input_topic", "/velodyne_points");
+        declare_parameter("output_topic", "/velodyne_points_filtered");
+        declare_parameter("ground_threshold", 0.15);
+        declare_parameter("min_ground_points", 500);
+        declare_parameter("min_height", 0.1);
+        declare_parameter("outlier_stddev", 1.0);
+        declare_parameter("outlier_mean_k", 50);
+        declare_parameter("target_frame", "root_link");
+        declare_parameter("use_tf", false);
+
+        // Get parameters
+        input_topic_ = get_parameter("input_topic").as_string();
+        output_topic_ = get_parameter("output_topic").as_string();
+        ground_threshold_ = get_parameter("ground_threshold").as_double();
+        min_ground_points_ = get_parameter("min_ground_points").as_int();
+        min_height_ = get_parameter("min_height").as_double();
+        outlier_stddev_ = get_parameter("outlier_stddev").as_double();
+        outlier_mean_k_ = get_parameter("outlier_mean_k").as_int();
+        target_frame_ = get_parameter("target_frame").as_string();
+        use_tf_ = get_parameter("use_tf").as_bool();
+
+        // Initialize PCL objects
+        seg_.setOptimizeCoefficients(true);
+        seg_.setModelType(pcl::SACMODEL_PLANE);
+        seg_.setMethodType(pcl::SAC_RANSAC);
+        seg_.setDistanceThreshold(ground_threshold_);
+        seg_.setMaxIterations(1000);
+
+        // Publishers/Subscribers
+        cloud_sub_ = create_subscription<sensor_msgs::msg::PointCloud2>(
+            input_topic_, 10,
+            [this](const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
+                this->cloudCallback(msg);
+            });
+
+        filtered_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>(output_topic_, 10);
+
+        log_parameters();
+    }
+
 private:
-  void cloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
-    // Конвертация в PCL
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::fromROSMsg(*msg, *cloud);
-    
-    if (cloud->empty()) {
-      RCLCPP_WARN(this->get_logger(), "Received empty point cloud");
-      return;
+    void log_parameters() {
+        RCLCPP_INFO(get_logger(), "Ground filter initialized with parameters:");
+        RCLCPP_INFO(get_logger(), "  Subscribe topic: %s", input_topic_.c_str());
+        RCLCPP_INFO(get_logger(), "  Publish topic: %s", output_topic_.c_str());
+        RCLCPP_INFO(get_logger(), "  Ground threshold: %.2f", ground_threshold_);
+        RCLCPP_INFO(get_logger(), "  Min height: %.2f", min_height_);
+        RCLCPP_INFO(get_logger(), "  Min ground points: %d", min_ground_points_);
+        RCLCPP_INFO(get_logger(), "  Outlier mean k: %d", outlier_mean_k_);
+        RCLCPP_INFO(get_logger(), "  Use TF: %s", use_tf_ ? "true" : "false");
     }
-    // Получение трансформации для преобразования в целевую систему координат
-    geometry_msgs::msg::TransformStamped transform;
-    bool transform_available = false;
-    if (use_imu_ || !target_frame_.empty()) {
-      try {
-        transform = tf_buffer_.lookupTransform(
-            target_frame_, 
-            msg->header.frame_id, 
-            msg->header.stamp,
-            rclcpp::Duration::from_seconds(0.1));
-        transform_available = true;
-      } catch (const tf2::TransformException &ex) {
-        RCLCPP_WARN(this->get_logger(), "Transform error: %s", ex.what());
-      }
+
+    void cloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
+    {
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::fromROSMsg(*msg, *cloud);
+
+        if (cloud->empty()) {
+            RCLCPP_WARN(get_logger(), "Received empty point cloud");
+            return;
+        }
+
+        pcl::PointCloud<pcl::PointXYZ>::Ptr obstacles = processCloud(cloud);
+
+        sensor_msgs::msg::PointCloud2 output;
+        pcl::toROSMsg(*obstacles, output);
+        output.header = msg->header;
+        filtered_pub_->publish(output);
     }
-    // Преобразование облака в целевую систему координат
-    pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-    Eigen::Affine3d transform_eigen = Eigen::Affine3d::Identity();
-    if (transform_available) {
-      transform_eigen = tf2::transformToEigen(transform.transform);
-      pcl::transformPointCloud(*cloud, *transformed_cloud, transform_eigen);
-    } else {
-      *transformed_cloud = *cloud;
-    }
-    // Определение оси для сегментации (по умолчанию вертикаль Z)
-    Eigen::Vector3f axis(0, 0, 1);
-    if (use_imu_ && transform_available) {
-      tf2::Quaternion q(
-        transform.transform.rotation.x,
-        transform.transform.rotation.y,
-        transform.transform.rotation.z,
-        transform.transform.rotation.w);
+
+       pcl::PointCloud<pcl::PointXYZ>::Ptr processCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
+    {
+        pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
+        pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
         
-      tf2::Matrix3x3 m(q);
-      double roll, pitch, yaw;
-      m.getRPY(roll, pitch, yaw);
-      
-      // Коррекция оси с учетом pitch робота
-      axis = Eigen::Vector3f(0, -sin(pitch), cos(pitch));
-      RCLCPP_DEBUG(this->get_logger(), "Adjusted axis to: [%.3f, %.3f, %.3f] (pitch: %.1f°)", 
-                   axis.x(), axis.y(), axis.z(), pitch * 180/M_PI);
+        seg_.setInputCloud(cloud);
+        seg_.segment(*inliers, *coefficients);  // segment() is void - doesn't return bool
+
+        pcl::PointCloud<pcl::PointXYZ>::Ptr obstacles(new pcl::PointCloud<pcl::PointXYZ>);
+        
+        // Check if we found enough inliers
+        if (inliers->indices.size() >= static_cast<size_t>(min_ground_points_)) {
+            pcl::ExtractIndices<pcl::PointXYZ> extract;
+            extract.setInputCloud(cloud);
+            extract.setIndices(inliers);
+            extract.setNegative(true);
+            extract.filter(*obstacles);
+            
+            RCLCPP_DEBUG(get_logger(), "Found %zu ground points, %zu obstacles remaining",
+                        inliers->indices.size(), obstacles->size());
+        } else {
+            RCLCPP_WARN(get_logger(), "Insufficient ground points (%zu), using full cloud",
+                       inliers->indices.size());
+            *obstacles = *cloud;
+        }
+
+        // Height filtering
+        pcl::PassThrough<pcl::PointXYZ> pass;
+        pass.setInputCloud(obstacles);
+        pass.setFilterFieldName("z");
+        pass.setFilterLimits(min_height_, std::numeric_limits<float>::max());
+        pass.filter(*obstacles);
+
+        // Outlier removal
+        pcl::StatisticalOutlierRemoval<pcl::PointXYZ> sor;
+        sor.setInputCloud(obstacles);
+        sor.setMeanK(outlier_mean_k_);
+        sor.setStddevMulThresh(outlier_stddev_);
+        sor.filter(*obstacles);
+
+        return obstacles;
     }
-    // Сегментация плоскости земли
-    pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
-    pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
-    pcl::SACSegmentation<pcl::PointXYZ> seg;
-    
-    seg.setOptimizeCoefficients(true);
-    seg.setModelType(pcl::SACMODEL_PERPENDICULAR_PLANE);
-    seg.setMethodType(pcl::SAC_RANSAC);
-    seg.setDistanceThreshold(max_distance_);
-    seg.setAxis(axis);
-    seg.setEpsAngle(angular_threshold_ * M_PI / 180.0);
-    seg.setInputCloud(transformed_cloud);
-    seg.segment(*inliers, *coefficients);
-    // Извлечение не-плоскостных точек (препятствия)
-    pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-    
-    if (inliers->indices.size() > static_cast<size_t>(min_ground_points_)) {
-      pcl::ExtractIndices<pcl::PointXYZ> extract;
-      extract.setInputCloud(transformed_cloud);
-      extract.setIndices(inliers);
-      extract.setNegative(true);
-      extract.filter(*filtered_cloud);
-      RCLCPP_DEBUG(this->get_logger(), "Filtered %zu ground points, leaving %zu obstacles", 
-                  inliers->indices.size(), filtered_cloud->size());
-    } else {
-      *filtered_cloud = *transformed_cloud;
-      RCLCPP_WARN(this->get_logger(), "Not enough ground points: %zu, using original cloud", inliers->indices.size());
-    }
-    // Фильтрация выбросов
-    pcl::StatisticalOutlierRemoval<pcl::PointXYZ> sor;
-    sor.setInputCloud(filtered_cloud);
-    sor.setMeanK(point_stack_);
-    sor.setStddevMulThresh(dist_treshold_);
-    sor.filter(*filtered_cloud);
-    // Фильтрация по высоте: удаляем точки ниже min_height_ в целевой системе координат
-    pcl::PointCloud<pcl::PointXYZ>::Ptr height_filtered_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::PassThrough<pcl::PointXYZ> pass;
-    pass.setInputCloud(filtered_cloud);
-    pass.setFilterFieldName("z");
-    pass.setFilterLimits(min_height_, std::numeric_limits<float>::max());
-    pass.filter(*height_filtered_cloud);
-    // Публикация результата в target_frame_
-    sensor_msgs::msg::PointCloud2 output;
-    pcl::toROSMsg(*height_filtered_cloud, output);
-    output.header.stamp = msg->header.stamp;
-    output.header.frame_id = target_frame_; // публикуем в целевом фрейме
-    pub_->publish(output);
-  }
-  // Члены класса
-  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_;
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_;
-  tf2_ros::Buffer tf_buffer_;
-  tf2_ros::TransformListener tf_listener_;
-  
-  double max_distance_;
-  double angular_threshold_;
-  int min_ground_points_;
-  bool use_imu_;
-  std::string target_frame_;
-  std::string subscribe_topic_;
-  std::string publish_topic_;
-  int point_stack_;
-  double dist_treshold_;
-  double min_height_; // новый параметр
+
+    // ROS
+    rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr cloud_sub_;
+    rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr filtered_pub_;
+    tf2_ros::Buffer tf_buffer_;
+    tf2_ros::TransformListener tf_listener_;
+
+    // PCL
+    pcl::SACSegmentation<pcl::PointXYZ> seg_;
+
+    // Parameters
+    std::string input_topic_;
+    std::string output_topic_;
+    std::string target_frame_;
+    double ground_threshold_;
+    double min_height_;
+    double outlier_stddev_;
+    int min_ground_points_;
+    int outlier_mean_k_;
+    bool use_tf_;
 };
-int main(int argc, char** argv) {
-  rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<GroundFilter>());
-  rclcpp::shutdown();
-  return 0;
+
+int main(int argc, char** argv)
+{
+    rclcpp::init(argc, argv);
+    auto node = std::make_shared<GroundFilter>();
+    rclcpp::spin(node);
+    rclcpp::shutdown();
+    return 0;
 }
