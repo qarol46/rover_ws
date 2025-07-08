@@ -163,7 +163,7 @@ hardware_interface::return_type WheeledRobotHardware::read(
     }
     
     last_successful_comm_ = time;
-    RCLCPP_INFO(logger_, "Successfully read wheel states");
+    RCLCPP_DEBUG(logger_, "Successfully read wheel states");
   } else {
     if (!first_read_ && (time - last_successful_comm_).seconds() > COMM_TIMEOUT) {
       socket_connected_ = false;
