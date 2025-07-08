@@ -30,14 +30,14 @@ def generate_launch_description():
                 'allow_undeclared_parameters': False,
                 #'target_frame': 'laserscan',
                 #'transform_tolerance': 0.01,
-                'min_height': -0.40,  # Lowered to detect ground obstacles
+                'min_height': -0.45,  # Lowered to detect ground obstacles
                 'max_height': 2.0,
                 'angle_min': -1.5708,  # -M_PI/2
                 'angle_max': 1.5708,  # M_PI/2
-                'angle_increment': 0.01745,  # ~1 degree resolution
-                'scan_time': 0.01,
+                'angle_increment': 0.01545,  # ~1 degree resolution
+                'scan_time': 0.005,
                 'range_min': 0.1,
-                'range_max': 25.0,
+                'range_max': 15.0,
                 'use_inf': False,
                 'inf_epsilon': 1.0
             }]
@@ -48,11 +48,20 @@ def generate_launch_description():
         executable='ground_filter_node',
         name='ground_filter',
         parameters=[{
-            'max_distance': 0.3,    # Макс. расстояние до плоскости
-            'angular_threshold': 5.0, # Угол отклонения от вертикали (градусы)
-            'min_ground_points': 500,
-            'use_imu':True,
-            'target_frame':'root_link'
+            'max_distance': 0.3,                            # Ignore distanse from floor
+            'angular_threshold': 7.0,                       # Угол отклонения от вертикали (градусы)
+            'min_ground_points': 500,                       
+            'use_imu': True,                                # Use imu
+            'target_frame':'root_link',                     # Robot targer frame
+            'subscribe_topic': '/velodyne_points',          # Input pcl
+            'publish_topic': '/velodyne_points_filtered',   # Output pcl
+            'number_of_points': 20,                         # Mininal number of points before vanish
+            'distance_threshold_calculation': 0.9,          # Min distance between points
+            #'line_min_length': 1.5,                         # Min lenght of points along a line
+            #'line_point_density': 150,                       
+            #'buffer_size': 3,                               # Размер буфера для временной фильтрации
+            #'min_point_age': 2,
+            'min_height': -0.3
 
         }]
     )
