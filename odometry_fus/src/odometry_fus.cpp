@@ -130,9 +130,9 @@ private:
     }
     
     double dt = (current_time - last_imu_time_).seconds();
-    if (dt > 0) {
-      yaw -= get_parameter("imu_drift_rate").as_double() * dt;
-    }
+    //if (dt > 0) {
+    //  yaw -= get_parameter("imu_drift_rate").as_double() * dt;
+    //}
     last_imu_time_ = current_time;
     
     yaw_history_.push_back(yaw);
