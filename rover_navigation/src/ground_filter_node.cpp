@@ -22,6 +22,8 @@ public:
     target_frame_ = this->declare_parameter("target_frame", "base_link");
     subscribe_topic_ = this->declare_parameter("subscribe_topic", "/velodyne_points");
     publish_topic_ = this->declare_parameter("publish_topic", "/velodyne_points_filtered");
+    point_stack_ = this->declare_parameter("number_of_points", 50);
+    dist_treshold_ = this->declare_parameter("distance_threshold", 1.0);
     
     // Подписка и публикация с параметризованными топиками
     sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
@@ -38,6 +40,8 @@ public:
     RCLCPP_INFO(this->get_logger(), "  Min ground points: %d", min_ground_points_);
     RCLCPP_INFO(this->get_logger(), "  Use IMU: %s", use_imu_ ? "true" : "false");
     RCLCPP_INFO(this->get_logger(), "  Target frame: %s", target_frame_.c_str());
+    RCLCPP_INFO(this->get_logger(), "  Number of near points: %d", point_stack_);
+    RCLCPP_INFO(this->get_logger(), "  Distanse treshhold: %.1f", dist_treshold_);
   }
 
 private:
@@ -117,8 +121,8 @@ private:
     // Фильтрация выбросов
     pcl::StatisticalOutlierRemoval<pcl::PointXYZ> sor;
     sor.setInputCloud(filtered_cloud);
-    sor.setMeanK(50);
-    sor.setStddevMulThresh(1.0);
+    sor.setMeanK(point_stack_);
+    sor.setStddevMulThresh(dist_treshold_);
     sor.filter(*filtered_cloud);
 
     // Публикация результата
@@ -141,6 +145,8 @@ private:
   std::string target_frame_;
   std::string subscribe_topic_;
   std::string publish_topic_;
+  int point_stack_;
+  double dist_treshold_;
 };
 
 int main(int argc, char** argv) {
