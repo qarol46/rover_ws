@@ -17,24 +17,45 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(xacro REQUIRED)
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(pcl_conversions REQUIRED)
+find_package(PCL 1.12 REQUIRED COMPONENTS common segmentation filters)
+
+# Сообщения для отладки
+message(STATUS "PCL include dirs: ${PCL_INCLUDE_DIRS}")
+message(STATUS "PCL libraries: ${PCL_LIBRARIES}")
+
+# Ground filter node
+add_executable(ground_filter_node src/ground_filter_node.cpp)
+target_include_directories(ground_filter_node PRIVATE
+  ${PCL_INCLUDE_DIRS}
+)
+target_link_libraries(ground_filter_node
+  ${PCL_LIBRARIES}
+)
+ament_target_dependencies(
+  ground_filter_node
+  rclcpp
+  sensor_msgs
+  tf2_ros
+  tf2_geometry_msgs
+  pcl_conversions
+)
 
 install(
   DIRECTORY launch rviz config maps
   DESTINATION share/${PROJECT_NAME}
 )
 
+install(TARGETS ground_filter_node
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
-  # the following line skips the linter which checks for copyrights
-  # uncomment the line when a copyright and license is not present in all source files
-  #set(ament_cmake_copyright_FOUND TRUE)
-  # the following line skips cpplint (only works in a git repo)
-  # uncomment the line when this package is not in a git repo
-  #set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif()
 

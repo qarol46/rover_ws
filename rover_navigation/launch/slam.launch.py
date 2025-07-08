@@ -52,48 +52,12 @@ def generate_launch_description():
         name='slam_toolbox',
         output='screen')
 
-    translate = Node(
-            package='pointcloud_to_laserscan',
-            executable='pointcloud_to_laserscan_node',
-            name='pointcloud_to_laserscan',
-            remappings=[
-                ('/cloud_in', '/velodyne_points'),  # Input pointcloud
-                ('/scan', '/scan') # Output laserscan
-            ],
-            parameters=[{
-                # CRITICAL FIX: Override QoS to match RViz2 requirements
-                'qos_overrides./scan.publisher.reliability': 'reliable',  # Force RELIABLE
-                'qos_overrides./scan.publisher.durability': 'volatile',
-                'qos_overrides./scan.publisher.history': 'keep_last',
-                'qos_overrides./scan.publisher.depth': 10,
-                'use_sim_time': LaunchConfiguration("sim"),  # Explicitly set
-                'allow_undeclared_parameters': False,
-                #'target_frame': 'velodyne',
-                #'transform_tolerance': 0.01,
-                'min_height': -0.5,  # Lowered to detect ground obstacles
-                'max_height': 2.0,
-                'angle_min': -1.5708,  # -M_PI/2
-                'angle_max': 1.5708,  # M_PI/2
-                'angle_increment': 0.01745,  # ~1 degree resolution
-                'scan_time': 0.1,
-                'range_min': 0.1,
-                'range_max': 25.0,
-                'use_inf': True,
-                'inf_epsilon': 1.0
-            }]
-            
-    )
-
     return LaunchDescription([
         DeclareLaunchArgument(
             name='rviz', 
             default_value='false',
             description='Run rviz'
         ),
-
-        #VLP_driver,
-        #VLP_pointcloud,
-        #translate,
 
         declare_use_sim_time_argument,
         declare_slam_params_file_cmd,
