@@ -88,13 +88,13 @@ def generate_launch_description():
         )
     )
 
-    odometry_fus_config = os.path.join(get_package_share_directory(package_name), 'config', 'odometry_fus.yaml')
+    #odometry_fus_config = os.path.join(get_package_share_directory(package_name), 'config', 'odometry_fus.yaml')
     odometry_fus_node = Node(
             package='odometry_fus',
             executable='odometry_fus_node',
             name='odometry_fus_node',        
             output='screen',
-            parameters=[odometry_fus_config],           
+            #parameters=[odometry_fus_config],           
     )
     # I prefer to use singe launch file for project, so
     # teleop_launch = IncludeLaunchDescription(
@@ -158,16 +158,16 @@ def generate_launch_description():
                 ('/scan', '/scan') # Output laserscan
             ],
             parameters=[{
-                # CRITICAL FIX: Override QoS to match RViz2 requirements
-                'qos_overrides./scan.publisher.reliability': 'reliable',  # Force RELIABLE
-                'qos_overrides./scan.publisher.durability': 'volatile',
-                'qos_overrides./scan.publisher.history': 'keep_last',
-                'qos_overrides./scan.publisher.depth': 10,
+                # # CRITICAL FIX: Override QoS to match RViz2 requirements
+                # 'qos_overrides./scan.publisher.reliability': 'reliable',  # Force RELIABLE
+                # 'qos_overrides./scan.publisher.durability': 'volatile',
+                # 'qos_overrides./scan.publisher.history': 'keep_last',
+                # 'qos_overrides./scan.publisher.depth': 10,
                 'use_sim_time': False,  # Explicitly set
                 'allow_undeclared_parameters': False,
                 #'target_frame': 'laserscan',
                 #'transform_tolerance': 0.01,
-                'min_height': -0.5,  # Lowered to detect ground obstacles
+                'min_height': -0.40,  # Lowered to detect ground obstacles
                 'max_height': 2.0,
                 'angle_min': -1.5708,  # -M_PI/2
                 'angle_max': 1.5708,  # M_PI/2
@@ -189,10 +189,10 @@ def generate_launch_description():
         #joystick,
         twist_mux,
         xsens_launch,
-        odometry_fus_node,
-        VLP_driver,
-        VLP_pointcloud,
-        translate,
+        #odometry_fus_node,
+        #VLP_driver,
+        #VLP_pointcloud,
+        #translate,
         #slam,
         #nav2
     ])

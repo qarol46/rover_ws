@@ -28,8 +28,6 @@ MAP_NAME='my_map' #change to the name of your own map here
 package_name = 'rover_navigation'
 def generate_launch_description():
 
-
-
     nav2_launch_path = PathJoinSubstitution(
         [FindPackageShare('nav2_bringup'), 'launch', 'navigation_launch.py']
     )
@@ -50,13 +48,6 @@ def generate_launch_description():
         [FindPackageShare(package_name), 'config', 'navigation_sim.yaml']
     )
 
-    slam_config_file = os.path.join(get_package_share_directory(package_name), 'config', 'slam.yaml')
-    slam = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource([os.path.join(
-            get_package_share_directory('slam_toolbox'), 'launch', 'online_async_launch.py')]),
-            launch_arguments={'use_sim_time': LaunchConfiguration("sim"), 'params_file': slam_config_file}.items()
-    )
-
     return LaunchDescription([
         DeclareLaunchArgument(
             name='sim', 
@@ -70,41 +61,39 @@ def generate_launch_description():
             description='Run rviz'
         ),
 
-    #    DeclareLaunchArgument(
-    #         name='map', 
-    #         default_value=default_map_path,
-    #         description='Navigation map path'
-    #     ),
+        DeclareLaunchArgument(
+            name='map', 
+            default_value=default_map_path,
+            description='Navigation map path'
+        ),
     
-        slam,
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(nav2_launch_path),
+            condition=UnlessCondition(LaunchConfiguration("sim")),
+            launch_arguments={
+                #'map': LaunchConfiguration("map"),
+                'use_sim_time': LaunchConfiguration("sim"),
+                'params_file': nav2_config_path
+            }.items()
+        ),
 
-        # IncludeLaunchDescription(
-        #     PythonLaunchDescriptionSource(nav2_launch_path),
-        #     condition=UnlessCondition(LaunchConfiguration("sim")),
-        #     launch_arguments={
-        #         #'map': LaunchConfiguration("map"),
-        #         'use_sim_time': LaunchConfiguration("sim"),
-        #         'params_file': nav2_config_path
-        #     }.items()
-        # ),
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(nav2_launch_path),
+            condition=IfCondition(LaunchConfiguration("sim")),
+            launch_arguments={
+                #'map': LaunchConfiguration("map"),
+                'use_sim_time': LaunchConfiguration("sim"),
+                'params_file': nav2_sim_config_path
+            }.items()
+        ),
 
-        # IncludeLaunchDescription(
-        #     PythonLaunchDescriptionSource(nav2_launch_path),
-        #     condition=IfCondition(LaunchConfiguration("sim")),
-        #     launch_arguments={
-        #         #'map': LaunchConfiguration("map"),
-        #         'use_sim_time': LaunchConfiguration("sim"),
-        #         'params_file': nav2_sim_config_path
-        #     }.items()
-        # )
-
-        # Node(
-        #     package='rviz2',
-        #     executable='rviz2',
-        #     name='rviz2',
-        #     output='screen',
-        #     arguments=['-d', rviz_config_path],
-        #     condition=IfCondition(LaunchConfiguration("rviz")),
-        #     parameters=[{'use_sim_time': LaunchConfiguration("sim")}]
-        #)
+        Node(
+            package='rviz2',
+            executable='rviz2',
+            name='rviz2',
+            output='screen',
+            arguments=['-d', rviz_config_path],
+            condition=IfCondition(LaunchConfiguration("rviz")),
+            parameters=[{'use_sim_time': LaunchConfiguration("sim")}]
+        ),
     ])

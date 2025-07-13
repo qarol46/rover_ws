@@ -17,15 +17,9 @@ find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_msgs REQUIRED)
-find_package(visualization_msgs REQUIRED) # Для PoseArray
+find_package(visualization_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
-
-# Include directories
-include_directories(
-  include
-  ${rclcpp_INCLUDE_DIRS}
-)
 
 # Узел fusion odometry
 add_executable(odometry_fus_node
@@ -38,6 +32,7 @@ ament_target_dependencies(odometry_fus_node
   geometry_msgs
   tf2_ros
   tf2_geometry_msgs
+  std_msgs
 )
 
 # Узел фильтра частиц
@@ -57,28 +52,25 @@ ament_target_dependencies(particle_filter_no_map_node
   std_msgs
 )
 
-install(TARGETS 
-  odometry_fus_node
-  particle_filter_no_map_node
-  DESTINATION lib/${PROJECT_NAME}
+# Узел измерения дрейфа иму
+add_executable(xsens_drift_measure
+  src/xsens_drift_measurement.cpp
 )
 
-install(DIRECTORY
-  include/
-  DESTINATION include
-)
-
-# Export dependencies
-ament_export_dependencies(
+ament_target_dependencies(xsens_drift_measure
   rclcpp
-  rclcpp_components
   nav_msgs
   sensor_msgs
   geometry_msgs
   tf2_ros
   tf2_geometry_msgs
-  visualization_msgs
 )
-ament_export_include_directories(include)
+
+install(TARGETS 
+  odometry_fus_node
+  particle_filter_no_map_node
+  xsens_drift_measure
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 ament_package()

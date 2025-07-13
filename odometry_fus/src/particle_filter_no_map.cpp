@@ -18,40 +18,43 @@ struct Particle {
 class ParticleFilterNoMap : public rclcpp::Node {
 public:
     ParticleFilterNoMap() : Node("particle_filter_no_map"), tf_broadcaster_(this) {
-        // Параметры
-        declare_parameter("num_particles", 100);
-        declare_parameter("odom_topic", "/odom");
-        declare_parameter("laser_topic", "/scan");
-        declare_parameter("particles_topic", "/particles");
-        declare_parameter("estimated_pose_topic", "/estimated_pose");
-        declare_parameter("world_frame", "odom");
-        declare_parameter("robot_frame", "base_link");
+    // Параметры
+    declare_parameter("num_particles", 100);
+    declare_parameter("odom_topic", "/odom");
+    declare_parameter("laser_topic", "/scan");
+    declare_parameter("particles_topic", "/particles");
+    declare_parameter("estimated_pose_topic", "/estimated_pose");
+    declare_parameter("world_frame", "odom");
+    declare_parameter("robot_frame", "base_link");
+    
+    num_particles_ = get_parameter("num_particles").as_int();
+    
+    // Инициализация генератора случайных чисел
+    std::random_device rd;
+    gen_ = std::mt19937(rd());
+    
+    // Инициализация частиц
+    initialize_particles();
+    
+    // Подписки с правильными QoS
+    odom_sub_ = create_subscription<nav_msgs::msg::Odometry>(
+        get_parameter("odom_topic").as_string(), 
+        rclcpp::QoS(10),  // Стандартные настройки для одометрии
+        std::bind(&ParticleFilterNoMap::odom_callback, this, std::placeholders::_1));
         
-        num_particles_ = get_parameter("num_particles").as_int();
+    laser_sub_ = create_subscription<sensor_msgs::msg::LaserScan>(
+        get_parameter("laser_topic").as_string(), 
+        rclcpp::SensorDataQoS(),  // Специальные настройки для сенсорных данных
+        std::bind(&ParticleFilterNoMap::laser_callback, this, std::placeholders::_1));
+    
+    // Публикаторы
+    particles_pub_ = create_publisher<geometry_msgs::msg::PoseArray>(
+        get_parameter("particles_topic").as_string(), 10);
         
-        // Инициализация генератора случайных чисел
-        std::random_device rd;
-        gen_ = std::mt19937(rd());
-        
-        // Инициализация частиц вокруг начала координат
-        initialize_particles();
-        
-        // Подписки
-        odom_sub_ = create_subscription<nav_msgs::msg::Odometry>(
-            get_parameter("odom_topic").as_string(), 10,
-            std::bind(&ParticleFilterNoMap::odom_callback, this, std::placeholders::_1));
-            
-        laser_sub_ = create_subscription<sensor_msgs::msg::LaserScan>(
-            get_parameter("laser_topic").as_string(), 10,
-            std::bind(&ParticleFilterNoMap::laser_callback, this, std::placeholders::_1));
-        
-        // Публикаторы
-        particles_pub_ = create_publisher<geometry_msgs::msg::PoseArray>(
-            get_parameter("particles_topic").as_string(), 10);
-            
-        estimated_pose_pub_ = create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
-            get_parameter("estimated_pose_topic").as_string(), 10);
-    }
+    estimated_pose_pub_ = create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
+        get_parameter("estimated_pose_topic").as_string(), 
+        rclcpp::QoS(10).reliable());  // Гарантированная доставка
+    }   
 
 private:
     double getYawFromQuaternion(const tf2::Quaternion& q) {
@@ -83,61 +86,50 @@ private:
     }
 
     void odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg) {
-        // Сохраняем odom для использования в laser_callback
-        last_odom_ = msg;
-        
-        // Первый вызов - просто сохраняем предыдущее значение
         if (!prev_odom_) {
             prev_odom_ = msg;
             return;
         }
-        
-        // Вычисляем изменение положения по одометрии
-        double dx = msg->pose.pose.position.x - prev_odom_->pose.pose.position.x;
-        double dy = msg->pose.pose.position.y - prev_odom_->pose.pose.position.y;
-        
-        // Вычисляем изменение ориентации
+
+        // Вычисляем изменение в локальной системе робота
         tf2::Quaternion q_prev, q_current;
         tf2::fromMsg(prev_odom_->pose.pose.orientation, q_prev);
         tf2::fromMsg(msg->pose.pose.orientation, q_current);
-        
+
         double yaw_prev = getYawFromQuaternion(q_prev);
         double yaw_current = getYawFromQuaternion(q_current);
+
+        // Разница в локальных координатах
+        double dx = msg->pose.pose.position.x - prev_odom_->pose.pose.position.x;
+        double dy = msg->pose.pose.position.y - prev_odom_->pose.pose.position.y;
         double dtheta = yaw_current - yaw_prev;
-        
-        // Нормализуем угол
-        dtheta = atan2(sin(dtheta), cos(dtheta));
-        
-        // Шумы для модели движения
-        std::normal_distribution<> dx_noise(0.0, 0.02);  // 2 см
-        std::normal_distribution<> dy_noise(0.0, 0.02);
-        std::normal_distribution<> dtheta_noise(0.0, 0.01);  // ~0.5 градуса
-        
-        // Обновляем все частицы
+
+        // Преобразуем в локальное смещение
+        double local_dx = dx * cos(yaw_prev) + dy * sin(yaw_prev);
+        double local_dy = -dx * sin(yaw_prev) + dy * cos(yaw_prev);
+
+        // Обновляем частицы
         for (auto& p : particles_) {
-            // Текущая ориентация частицы
-            tf2::Quaternion q_p;
-            tf2::fromMsg(p.pose.orientation, q_p);
-            double yaw_p = getYawFromQuaternion(q_p);
-            
-            // Применяем движение с шумом
-            double noisy_dx = dx + dx_noise(gen_);
-            double noisy_dy = dy + dy_noise(gen_);
-            double noisy_dtheta = dtheta + dtheta_noise(gen_);
-            
-            // Обновляем положение (в глобальных координатах)
-            p.pose.position.x += noisy_dx * cos(yaw_p) - noisy_dy * sin(yaw_p);
-            p.pose.position.y += noisy_dx * sin(yaw_p) + noisy_dy * cos(yaw_p);
-            
+            double yaw_p = getYawFromQuaternion(tf2::Quaternion(
+                p.pose.orientation.x,
+                p.pose.orientation.y,
+                p.pose.orientation.z,
+                p.pose.orientation.w
+            ));
+
+            // Применяем движение в локальной системе частицы
+            p.pose.position.x += local_dx * cos(yaw_p) - local_dy * sin(yaw_p);
+            p.pose.position.y += local_dx * sin(yaw_p) + local_dy * cos(yaw_p);
+
             // Обновляем ориентацию
-            yaw_p += noisy_dtheta;
+            yaw_p += dtheta;
+            tf2::Quaternion q_p;
             q_p.setRPY(0, 0, yaw_p);
             p.pose.orientation = tf2::toMsg(q_p);
         }
-        
         prev_odom_ = msg;
         publish_particles();
-    }
+    }   
 
     void laser_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg) {
         if (!last_odom_) return;
@@ -298,14 +290,14 @@ private:
         estimated_pose_pub_->publish(pose_msg);
         
         // Публикуем TF
-        geometry_msgs::msg::TransformStamped transform;
-        transform.header = pose_msg.header;
-        transform.child_frame_id = get_parameter("robot_frame").as_string();
-        transform.transform.translation.x = pose_msg.pose.pose.position.x;
-        transform.transform.translation.y = pose_msg.pose.pose.position.y;
-        transform.transform.translation.z = 0.0;
-        transform.transform.rotation = pose_msg.pose.pose.orientation;
-        tf_broadcaster_.sendTransform(transform);
+        //geometry_msgs::msg::TransformStamped transform;
+        //transform.header = pose_msg.header;
+        //transform.child_frame_id = get_parameter("robot_frame").as_string();
+        //transform.transform.translation.x = pose_msg.pose.pose.position.x;
+        //transform.transform.translation.y = pose_msg.pose.pose.position.y;
+        //transform.transform.translation.z = 0.0;
+        //transform.transform.rotation = pose_msg.pose.pose.orientation;
+        //tf_broadcaster_.sendTransform(transform);
     }
 
     // Параметры
