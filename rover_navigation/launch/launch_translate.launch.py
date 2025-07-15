@@ -52,9 +52,9 @@ def generate_launch_description():
             # Основные параметры фильтрации
             'input_topic': '/velodyne_points',             # Входной топик облака точек
             'output_topic': '/velodyne_points_filtered',   # Выходной топик отфильтрованных точек
-            'ground_threshold': 0.15,                     # Макс. расстояние до плоскости земли (аналог max_distance)
-            'min_ground_points': 300,                     # Мин. точек для определения плоскости земли
-            'min_height': -0.3,                            # Мин. высота препятствий
+            'ground_threshold': 0.1,                     # Макс. расстояние до плоскости земли (аналог max_distance)
+            'min_ground_points': 420,                     # Мин. точек для определения плоскости земли
+            'min_height': -0.49,                            # Мин. высота препятствий
             
             # Параметры TF-преобразований
             'use_tf': False,                              # Использовать ли преобразование координат

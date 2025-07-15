@@ -12,13 +12,13 @@ class OdomFusion : public rclcpp::Node {
 public:
   OdomFusion() : Node("odometry_fusion"), current_direction_(1.0) {
     declare_parameter("odom_topic", "/diff_cont/odom");
-    declare_parameter("imu_topic", "/imu");
+    declare_parameter("imu_topic", "/imu/data");
     declare_parameter("output_topic", "/odom");
     declare_parameter("child_frame", "root_link");
     declare_parameter("world_frame", "odom");
     declare_parameter("publish_tf", true);
     declare_parameter("min_speed", 0.001);
-    declare_parameter("min_angular_speed", 0.03);
+    declare_parameter("min_angular_speed", 0.025);
     
     last_position_.x = 0.0;
     last_position_.y = 0.0;
@@ -88,7 +88,7 @@ private:
     if (!is_turning_) first_turn_ = true;
 
       // При начале нового поворота фиксируем опорное значение IMU
-      if (is_turning_ && imu_initialized_) {
+      if (is_turning_) {
         if (first_turn_) {
           imu_reference_yaw_ = current_imu_yaw_;
           first_turn_ = false;
