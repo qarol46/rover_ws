@@ -1,5 +1,4 @@
 <?xml version="1.0"?>
-<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>rover_navigation</name>
   <version>0.0.0</version>
@@ -9,20 +8,27 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   
-  <exec_depend>nav2_bringup</exec_depend>
-  <exec_depend>slam_toolbox</exec_depend>
-  <exec_depend>nav2_navfn_planner</exec_depend>
-  <exec_depend>pointcloud_to_laserscan</exec_depend>
-  <exec_depend>velodyne_pointcloud</exec_depend>
-
-  <!-- Фильтрация облака точек -->
-  <depend>pcl_conversions</depend>
+  <!-- Core ROS 2 dependencies -->
+  <depend>rclcpp</depend>
+  <depend>sensor_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>tf2_ros</depend>
   <depend>tf2_geometry_msgs</depend>
+  <depend>tf2_eigen</depend>
+  <depend>pcl_conversions</depend>
+  <depend>nav2_bringup</depend>
+  <depend>nav2_common</depend>
+  
+  <!-- Navigation dependencies -->
+  <depend>slam_toolbox</depend>
+  <depend>nav2_navfn_planner</depend>
+  <depend>pointcloud_to_laserscan</depend>
+  <depend>velodyne_pointcloud</depend>
+  
+  <!-- PCL dependencies -->
   <depend>libpcl-dev</depend>
   <depend>eigen</depend>
-  <depend>sensor_msgs</depend>
-  <depend>tf2_ros</depend>
-
+  
   <export>
     <build_type>ament_cmake</build_type>
   </export>
