@@ -1,4 +1,4 @@
-odometry_fus:
+/**:
   ros__parameters:
     odom_topic: "/diff_cont/odom"
     imu_topic: "/imu"

@@ -1,5 +1,5 @@
 # rtabmap_params.yaml
-rtabmap:
+/**:
   ros__parameters:
 
     # General parameters
