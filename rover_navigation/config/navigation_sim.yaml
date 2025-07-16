@@ -16,12 +16,12 @@ amcl:
     global_frame_id: "map"
     lambda_short: 0.3
     laser_likelihood_max_dist: 2.0
-    laser_max_range: 5.0
-    laser_min_range: 0.9
+    laser_max_range: 25.0
+    laser_min_range: 0.2
     laser_model_type: "likelihood_field"
     max_beams: 60
-    max_particles: 2000
-    min_particles: 500
+    min_particles: 500  # Increase from 500
+    max_particles: 2000  # Increase from 2000
     odom_frame_id: "odom"
     pf_err: 0.05
     pf_z: 0.99
@@ -32,7 +32,7 @@ amcl:
     save_pose_rate: 0.5
     sigma_hit: 0.2
     tf_broadcast: True
-    transform_tolerance: 1.0 #Seconds
+    transform_tolerance: 3.0 #Seconds
     update_min_a: 0.2
     update_min_d: 0.25
     z_hit: 0.5
@@ -41,21 +41,17 @@ amcl:
     z_short: 0.05
     scan_topic: scan
     map_topic: map
-    initial_pose:
-      x: 1.0  # Set to known valid coordinates in your map
-      y: 1.0
-      z: 0.0
-      yaw: 0.0
+    set_initial_pose: false
     always_reset_initial_pose: false
     first_map_only: false
 
-amcl_map_client:
-  ros__parameters:
-    use_sim_time: True
+# amcl_map_client:
+#   ros__parameters:
+#     use_sim_time: True
 
-amcl_rclcpp_node:
-  ros__parameters:
-    use_sim_time: True
+# amcl_rclcpp_node:
+#   ros__parameters:
+#     use_sim_time: True
 
 bt_navigator:
   ros__parameters:
@@ -63,14 +59,16 @@ bt_navigator:
     global_frame: map
     robot_base_frame: root_link
     odom_topic: /odom
+    default_nav_to_pose_bt_xml: "/home/tms/Projects/rover_ws/src/rover/rover_navigation/behavior_trees/navigate_to_pose_w_replanning_and_recovery.xml"
+    default_nav_through_poses_bt_xml: "/home/tms/Projects/rover_ws/src/rover/rover_navigation/behavior_trees/navigate_through_poses_w_replanning_and_recovery.xml"
     bt_loop_duration: 10
-    default_server_timeout: 20
+    default_server_timeout: 10
     wait_for_service_timeout: 1000
     enable_groot_monitoring: True
     groot_zmq_publisher_port: 1666
     groot_zmq_server_port: 1667
-    transform_tolerance: 0.1
-    filter_duration: 0.3
+    transform_tolerance: 0.4
+    filter_duration: 0.2
     service_intropection_mode: "disabled"
     always_reload_bt_xml: false
     goal_blackboard_id: goal
@@ -131,28 +129,28 @@ bt_navigator:
     - nav2_drive_on_heading_cancel_bt_node
     - nav2_is_battery_charging_condition_bt_node
 
-bt_navigator_rclcpp_node:
-  ros__parameters:
-    use_sim_time: True
+# bt_navigator_rclcpp_node:
+#   ros__parameters:
+#     use_sim_time: True
 
-bt_navigator_navigate_through_poses_rclcpp_node:
-  ros__parameters:
-    use_sim_time: True
+# bt_navigator_navigate_through_poses_rclcpp_node:
+#   ros__parameters:
+#     use_sim_time: True
 
-bt_navigator_navigate_to_pose_rclcpp_node:
-  ros__parameters:
-    use_sim_time: True
+# bt_navigator_navigate_to_pose_rclcpp_node:
+#   ros__parameters:
+#     use_sim_time: True
 
 controller_server:
   ros__parameters:
     use_sim_time: True
-    global_frame: "map"
-    robot_base_frame: "root_link"
+    global_frame: map
+    robot_base_frame: root_link
     controller_frequency: 20.0
-    min_x_velocity_threshold: 0.001
+    min_x_velocity_threshold: 0.5
     min_y_velocity_threshold: 0.5
-    min_theta_velocity_threshold: 0.001
-    transform_tolerance: 0.5  # Increase if needed
+    min_theta_velocity_threshold: 0.01
+    transform_tolerance: 1.0  # Increase if needed
     failure_tolerance: 0.3
     progress_checker_plugin: "progress_checker"
     goal_checker_plugins: ["general_goal_checker"] # "precise_goal_checker"
@@ -189,29 +187,29 @@ controller_server:
       debug_trajectory_details: True
       min_vel_x: 0.0
       min_vel_y: 0.0
-      max_vel_x: 0.26
-      max_vel_y: 0.0
+      max_vel_x: 10.0
+      max_vel_y: 10.0
       max_vel_theta: 1.00
       min_speed_xy: 0.0
-      max_speed_xy: 0.26
+      max_speed_xy: 10.0
       min_speed_theta: 0.0
       # Add high threshold velocity for turtlebot 3 issue.
       # https://github.com/ROBOTIS-GIT/turtlebot3_simulations/issues/75
       acc_lim_x: 2.5
-      acc_lim_y: 0.0
-      acc_lim_theta: 3.2
+      acc_lim_y: 2.5
+      acc_lim_theta: 1.5
       decel_lim_x: -2.5
-      decel_lim_y: 0.0
-      decel_lim_theta: -3.2
-      vx_samples: 20
+      decel_lim_y: -2.5
+      decel_lim_theta: -1.5
+      vx_samples: 10
       vy_samples: 5
-      vtheta_samples: 40
-      sim_time: 2.0
-      linear_granularity: 0.05
-      angular_granularity: 0.025
-      transform_tolerance: 0.2
-      xy_goal_tolerance: 0.25
+      vtheta_samples: 20
+      linear_granularity: 0.1
+      angular_granularity: 0.05
+      transform_tolerance: 0.5
+      xy_goal_tolerance: 0.5
       trans_stopped_velocity: 0.25
+      sim_time: 1.5
       short_circuit_trajectory_evaluation: True
       stateful: True
       critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
@@ -226,28 +224,27 @@ controller_server:
       RotateToGoal.slowing_factor: 5.0
       RotateToGoal.lookahead_time: -1.0
       
-controller_server_rclcpp_node:
-  ros__parameters:
-    use_sim_time: True
+# controller_server_rclcpp_node:
+#   ros__parameters:
+#     use_sim_time: True
 
 global_costmap:
   ros__parameters:
       use_sim_time: True
-      footprint_padding: 0.03
-      update_frequency: 5.0
+      update_frequency: 1.0
       publish_frequency: 1.0
       global_frame: map
       robot_base_frame: root_link
-      rolling_window: false
-      width: 50
-      height: 50
+      rolling_window: true
+      # width: 30
+      # height: 30
       resolution: 0.05
       robot_radius: 0.22 # radius set and used, so no footprint points      
       track_unknown_space: true
       plugins: ["static_layer", "obstacle_layer", "voxel_layer", "inflation_layer"]
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
-        enabled: True
+        enabled: false
         observation_sources: pointcloud
         footprint_clearing_enabled: False
         max_obstacle_height: 5.0
@@ -299,17 +296,18 @@ global_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         enabled: True
-        inflation_radius: 0.55
+        inflation_radius: 0.8
         cost_scaling_factor: 3.0
-        inflate_unknown: False
-        inflate_around_unknown: False
-      always_send_full_costmap: True
-  global_costmap_client:
-    ros__parameters:
-      use_sim_time: True
-  global_costmap_rclcpp_node:
-    ros__parameters:
-      use_sim_time: True
+        inflate_unknown: false
+        inflate_around_unknown: false
+      always_send_full_costmap: false
+      introspection_mode: "disabled"
+  # global_costmap_client:
+  #   ros__parameters:
+  #     use_sim_time: True
+  # global_costmap_rclcpp_node:
+  #   ros__parameters:
+  #     use_sim_time: True
 
 local_costmap:
   ros__parameters:
@@ -317,10 +315,10 @@ local_costmap:
       publish_frequency: 2.0
       global_frame: odom
       robot_base_frame: root_link
-      use_sim_time: True
-      rolling_window: True
-      width: 10
-      height: 10
+      use_sim_time: true
+      rolling_window: true
+      width: 3
+      height: 3
       resolution: 0.05
       robot_radius: 0.22 # radius set and used, so no footprint points
       plugins: [ "voxel_layer", "inflation_layer"] #, "rgbd_obstacle_layer"]
@@ -401,12 +399,13 @@ local_costmap:
       #     decay_acceleration: 5.0     # default 0, 1/s^2. 
       #     model_type: 1               # default 0, model type for frustum. 0=depth camera, 1=3d lidar like VLP16 or similar
       always_send_full_costmap: True
-  local_costmap_client:
-    ros__parameters:
-      use_sim_time: True
-  local_costmap_rclcpp_node:
-    ros__parameters:
-      use_sim_time: True
+      introspection_mode: "disabled"
+  # local_costmap_client:
+  #   ros__parameters:
+  #     use_sim_time: True
+  # local_costmap_rclcpp_node:
+  #   ros__parameters:
+  #     use_sim_time: True
 
 # The yaml_filename does not need to be specified since it going to be set by defaults in launch.
 # If you'd rather set it in the yaml, remove the default "map" value in the tb3_simulation_launch.py
@@ -426,14 +425,14 @@ map_saver:
 
 planner_server:
   ros__parameters:
-    expected_planner_frequency: 20.0
+    #expected_planner_frequency: 20.0
     use_sim_time: True
-    planner_plugins: ["NavFn"]  # ["GridBased"]
-    NavFn:                      # change plugin name
-      plugin: "nav2_navfn_planner/NavfnPlanner" # In Iron and older versions, "/" was used instead of "::"
-      tolerance: 0.5
-      use_astar: false
-      allow_unknown: True
+    planner_plugins: ["GridBased"]
+    GridBased:             
+        plugin: "nav2_navfn_planner/NavfnPlanner" # In Iron and older versions, "/" was used instead of "::"
+        tolerance: 0.5
+        #use_astar: false
+        allow_unknown: True
 
 # planner_server:
 #   ros__parameters:
@@ -447,9 +446,9 @@ planner_server:
 #       tolerance: 0.5
 #       allow_unknown: True
 
-planner_server_rclcpp_node:
-  ros__parameters:
-    use_sim_time: True
+# planner_server_rclcpp_node:
+#   ros__parameters:
+#     use_sim_time: True
 
 smoother_server:
   ros__parameters:
@@ -486,9 +485,9 @@ behavior_server:
     rotational_acc_lim: 3.2
     use_sim_time: True
 
-robot_state_publisher:
-  ros__parameters:
-    use_sim_time: True
+# robot_state_publisher:
+#   ros__parameters:
+#     use_sim_time: True
 
 waypoint_follower:
   ros__parameters:
@@ -544,3 +543,12 @@ velocity_smoother:
 #       min_height: 0.15
 #       max_height: 2.0
 #       enabled: True
+
+lifecycle_manager:
+  ros__parameters:
+    autostart: true
+    node_names: ['controller_server', 'planner_server', 'behavior_server', 'bt_navigator', 'waypoint_follower']
+    bond_timeout: 10.0
+    attempt_respawn_reconnection: true
+    bond_respawn_max_duration: 30.0
+    introspection_mode: "disabled"

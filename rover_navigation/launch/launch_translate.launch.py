@@ -34,14 +34,13 @@ def generate_launch_description():
                 'max_height': 2.0,
                 'angle_min': -1.5708,  # -M_PI/2
                 'angle_max': 1.5708,  # M_PI/2
-                'angle_increment': 0.01545,  # ~1 degree resolution
+                'angle_increment': 0.0087,  # 0.5° resolution //0.01545,  # ~1 degree resolution
                 'scan_time': 0.005,
                 'range_min': 0.1,
-                'range_max': 15.0,
-                'use_inf': False,
-                'inf_epsilon': 1.0
+                'range_max': 25.0,
+                'use_inf': True,
+                'inf_epsilon': 0.1
             }]
-            
     )
     ground_filter = Node(
     package='rover_navigation',
@@ -52,9 +51,9 @@ def generate_launch_description():
             # Основные параметры фильтрации
             'input_topic': '/velodyne_points',             # Входной топик облака точек
             'output_topic': '/velodyne_points_filtered',   # Выходной топик отфильтрованных точек
-            'ground_threshold': 0.1,                     # Макс. расстояние до плоскости земли (аналог max_distance)
-            'min_ground_points': 420,                     # Мин. точек для определения плоскости земли
-            'min_height': -0.49,                            # Мин. высота препятствий
+            'ground_threshold': 0.12,                     # Макс. расстояние до плоскости земли (аналог max_distance)
+            'min_ground_points': 650,                     # Мин. точек для определения плоскости земли
+            'min_height': -0.3,                            # Мин. высота препятствий
             
             # Параметры TF-преобразований
             'use_tf': False,                              # Использовать ли преобразование координат
