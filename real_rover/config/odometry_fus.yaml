@@ -1,3 +1,4 @@
+/**:
 odom_fusion:
   ros__parameters:
     odom_topic: "/diff_cont/odom"  # Топик одометрии
@@ -7,3 +8,4 @@ odom_fusion:
     world_frame: "odom"            # Мировой фрейм
     publish_tf: true               # Публиковать TF?
     min_speed: 0.001                # Минимальная скорость для фильтрации
+    min_angular_speed: 0.025
