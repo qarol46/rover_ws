@@ -59,7 +59,7 @@ def generate_launch_description():
     )
     
     # Запуск Gazebo
-    gazebo_world_file = os.path.join(get_package_share_directory(package_name),'worlds','space.world')
+    gazebo_world_file = os.path.join(get_package_share_directory(package_name),'worlds','gas_station.world')
     gazebo_params_file = os.path.join(get_package_share_directory(package_name),'config','gazebo_params.yaml')
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([os.path.join(

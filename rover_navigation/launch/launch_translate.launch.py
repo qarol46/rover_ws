@@ -17,7 +17,7 @@ def generate_launch_description():
             executable='pointcloud_to_laserscan_node',
             name='pointcloud_to_laserscan',
             remappings=[
-                ('/cloud_in', '/velodyne_points_filtered'),  # Input pointcloud
+                ('/cloud_in', '/velodyne_points'),  # Input pointcloud
                 ('/scan', '/scan') # Output laserscan
             ],
             parameters=[{
@@ -71,6 +71,6 @@ def generate_launch_description():
             description='Enable use_sime_time to true'
         ),
         translate,
-        ground_filter,
+        #ground_filter,
 
     ])
